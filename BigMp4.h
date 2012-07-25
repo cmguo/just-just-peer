@@ -8,6 +8,8 @@
 
 #include <ppbox/mux/tool/Sink.h>
 
+#include <framework/string/Url.h>
+
 #include <util/protocol/http/HttpClient.h>
 #include <util/stream/StlStream.h>
 
@@ -131,7 +133,11 @@ namespace ppbox
 
             void response(boost::system::error_code const & ec);
 
-        private:
+            std::string parse_url(
+                std::string const &url,
+                boost::system::error_code& ec);
+        
+		private:
             struct StepType
             {
                 enum Enum
@@ -146,6 +152,8 @@ namespace ppbox
                     download_end_body,
                 };
             };
+
+
         private:
             boost::asio::io_service& io_svc_;
             Peer& vod_;
@@ -175,7 +183,7 @@ namespace ppbox
             
             response_type resp_;
             StepType::Enum open_step_;
-            std::string url_;
+            framework::string::Url url_;
             time_t local_time_;
 
             //当前下载到第几个分段

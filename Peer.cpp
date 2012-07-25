@@ -44,11 +44,11 @@ FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("Peer", 0)
 
 
 #ifndef PPBOX_DNS_VOD_JUMP
-#define PPBOX_DNS_VOD_JUMP "(tcp)(v4)jump.150hi.com:80"
+#define PPBOX_DNS_VOD_JUMP "(tcp)(v4)dt.api.pplive.com:80"
 #endif
 
 #ifndef PPBOX_DNS_VOD_DRAG
-#define PPBOX_DNS_VOD_DRAG "(tcp)(v4)drag.150hi.com:80"
+#define PPBOX_DNS_VOD_DRAG "(tcp)(v4)drag.api.pplive.com:80"
 #endif
 
 namespace ppbox
@@ -56,8 +56,8 @@ namespace ppbox
     namespace peer
     {
 
-        static const framework::network::NetName dns_vod_jump_server(PPBOX_DNS_VOD_JUMP);
-        static const framework::network::NetName dns_vod_drag_server(PPBOX_DNS_VOD_DRAG);
+        DEFINE_DOMAIN_NAME(dns_download_vod_jump_server,PPBOX_DNS_VOD_JUMP);
+        DEFINE_DOMAIN_NAME(dns_download_vod_drag_server,PPBOX_DNS_VOD_DRAG);
         PPBOX_REGISTER_SOURCE(ppvod, 2, LivePeerSource);
         PPBOX_REGISTER_SOURCE(pplive, 2, VodPeerSource);
 
@@ -240,14 +240,14 @@ namespace ppbox
             LOG_S(framework::logger::Logger::kLevelDebug,"[async_fetch_jump]");
 
             framework::string::Url url("http://localhost/");
-            url.host(dns_vod_jump_server.host());
-            url.svc(dns_vod_jump_server.svc());
+            url.host(dns_download_vod_jump_server.host());
+            url.svc(dns_download_vod_jump_server.svc());
             url.path("/" + playlink + "dt");
             url.param("type", client_type);
             url.param("t", format(rand()));
 
             return  async_fetch(url
-                ,dns_vod_jump_server
+                ,dns_download_vod_jump_server
                 ,boost::bind(&Peer::jump_callback,this,resq,_1,_2)
                 );
         }
@@ -258,11 +258,12 @@ namespace ppbox
             ,boost::asio::streambuf & buf)
         {
             boost::system::error_code ec1 = ec;
-            ppbox::peer::VodJumpInfo jump_info;
+            ppbox::peer::VodJumpInfoNoDrag jump_info;
+
             if(!ec1)
             {
                 std::string buffer = boost::asio::buffer_cast<char const *>(buf.data());
-                LOG_S(Logger::kLevelDebug2, "[drag_callback] jump buffer: " << buffer);
+                LOG_S(Logger::kLevelDebug2, "[jump_callback] jump buffer: " << buffer);
 
                 boost::asio::streambuf buf2;
                 util::buffers::buffer_copy(
@@ -298,8 +299,8 @@ namespace ppbox
 
 
             framework::string::Url url("http://localhost/");
-            url.host(dns_vod_drag_server.host());
-            url.svc(dns_vod_drag_server.svc());
+            url.host(dns_download_vod_drag_server.host());
+            url.svc(dns_download_vod_drag_server.svc());
             url.path("/" + playlink + "0drag");
             url.param("type", client_type);
 
@@ -319,7 +320,7 @@ namespace ppbox
             if(!ec1)
             {
                 std::string buffer = boost::asio::buffer_cast<char const *>(buf.data());
-                LOG_S(Logger::kLevelDebug2, "[drag_callback] jump buffer: " << buffer);
+                LOG_S(Logger::kLevelDebug2, "[drag_callback] drag buffer: " << buffer);
 
                 boost::asio::streambuf buf2;
                 util::buffers::buffer_copy(buf2.prepare(buf.size()), buf.data());

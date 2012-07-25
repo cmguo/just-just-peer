@@ -10,6 +10,7 @@
 #include <util/archive/ArchiveBuffer.h>
 #include <util/stream/StreamTransfer.h>
 #include <util/protocol/pptv/TimeKey.h>
+#include <util/protocol/pptv/Url.h>
 
 #include <framework/system/BytesOrder.h>
 #include <framework/logger/LoggerStreamRecord.h>
@@ -127,7 +128,15 @@ namespace ppbox
             local_time_ = time(NULL);
 
             resp_ = resp;
-            url_ = playlink;//= parse_url(playlink,ec);
+
+			std::string link = playlink;
+			if (std::string::npos == link.find("://")) {
+				link = "ppvod:///" + link;
+			}
+            url_.from_string(link);
+            std::string oldUrl = parse_url(url_.path().substr(1), ec);
+            url_.path(oldUrl);
+			
             handle_async_open(ec);
         }
 
@@ -174,13 +183,16 @@ namespace ppbox
 
         void BigMp4::cancel()
         {
+			boost::system::error_code ec;
             vod_.cancel(handle_);
-        }
+			http_client_.cancel(ec);
+		}
 
         void BigMp4::close()
         {
             //StepType::Enum open_step_;
             LOG_S(framework::logger::Logger::kLevelError,"[close] StepType:"<<open_step_);
+          boost::system::error_code ec;
 
             switch(open_step_)
             {
@@ -197,11 +209,8 @@ namespace ppbox
                 }
                 break;
             case StepType::fetch_head:
-                {
-                }
                 break;
             default:
-                //http_client_.close();
                 open_step_ = StepType::closed;
                 break;
             }
@@ -230,7 +239,9 @@ namespace ppbox
             if (ec)
             {
                 close();
-                response(ec);
+                if (open_step_ != StepType::closed) {
+                    response(ec);
+				}
                 return;
             }
 
@@ -267,8 +278,10 @@ namespace ppbox
                 {
                     if(mode_ == FetchMode::small_head)
                     {
-                        mp4_merge.meger_small_head(*stream_tmp_, *stream_tmp_, segment_infos_,head_size_, ec1);
-                        cur_size_= head_size_;
+                        if (!head_size_) {
+                            mp4_merge.meger_small_head(*stream_tmp_, *stream_tmp_, segment_infos_,head_size_, ec1);
+                            cur_size_= head_size_;
+                        }
                     }
                     else
                     {
@@ -360,7 +373,7 @@ namespace ppbox
             host_tmp.port(81);
             url_t.host(host_tmp.host());
             url_t.svc(host_tmp.svc());
-            url_t.path("/" + url_ );
+            url_t.path("/" + url_.path());
 
             util::protocol::HttpRequest request;
             request.head().method = util::protocol::HttpRequestHead::get;
@@ -727,7 +740,7 @@ namespace ppbox
 
             assert(NULL == handle_);
             handle_ = vod_.async_fetch_jump(
-                url_
+                url_.path()
                 ,"ppbox"
                 ,boost::bind(&BigMp4::jump_callback,this,_1,_2)
                 );
@@ -754,7 +767,7 @@ namespace ppbox
 
             assert(NULL == handle_);
             handle_ = vod_.async_fetch_drag(
-                url_
+                url_.path()
                 ,"ppbox"
                 ,jump_info_
                 ,boost::bind(&BigMp4::drag_callback,this,_1,_2)
@@ -796,20 +809,27 @@ namespace ppbox
             framework::string::Url real_url("http://localhost/");
             real_url.host(jump_info_.server_host.host());
             real_url.svc(jump_info_.server_host.svc());
-            real_url.path("/" + format(segment) + "/" + url_);
+            real_url.path("/" + format(segment) + "/" + url_.path());
             real_url.param("key", get_key());
+            real_url.param("type", "ppbox");
             std::string tmp =  real_url.to_string();
             tmp = framework::string::Url::encode(tmp);
 
             Url url("http://localhost/ppvaplaybyopen?" + drag_info_.segments[segment].va_rid);
             url.param("url", tmp);
+            url.param("rid", drag_info_.segments[segment].va_rid);
             url.param("blocksize", format(drag_info_.segments[segment].block_size));
             url.param("filelength", format(drag_info_.segments[segment].file_length));
             url.param("headlength", format(drag_info_.segments[segment].head_length));
 
             url.param("autoclose", "false");
             url.param("drag", "1");
-            url.param("BWType", format(jump_info_.BWType));
+            std::string bwt = url_.param("bwtype");
+			if ("" == bwt) {			
+			    url.param("BWType", format(jump_info_.BWType));
+			} else {
+                url.param("BWType", bwt);
+			}
             url.param("blocknum", format(drag_info_.segments[segment].block_num));
 
             request.head().path = url.path_all();
@@ -849,6 +869,29 @@ namespace ppbox
             resp.swap(resp_);
             resp(ec);
         }
+
+
+        std::string BigMp4::parse_url(
+            std::string const &url,
+            boost::system::error_code& ec)
+        {
+            std::string  newUrl ;
+            if (url.size() > 4 && url.substr(url.size() - 4) == ".mp4") {
+                if (url.find('%') == std::string::npos) {
+                    newUrl = Url::encode(url, ".");
+					return newUrl;
+                }
+				return url;
+            } else {
+                std::string key = "kioe257ds";
+                newUrl = util::protocol::pptv::url_decode(url, key);
+                framework::string::StringToken st(newUrl, "||");
+                if (!st.next_token(ec)) {
+                    newUrl = st.remain();
+                }
+            }
+            return newUrl;
+	    }
 
     } // namespace BigMp4
 } // namespace ppbox

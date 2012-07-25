@@ -30,9 +30,10 @@ namespace ppbox
             boost::uint32_t& head_size,
             boost::system::error_code & ec)
         {
-            if (1 == segment_infos.size()) {
-                return boost::system::error_code();
-            }
+            //if (1 == segment_infos.size()) {
+			//	head_size = segment_infos[0].head_length;
+            //    return boost::system::error_code();
+            //}
 
             // ios copy to memory
             std::string string_buf;
