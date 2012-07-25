@@ -3,6 +3,10 @@
 #include "ppbox/peer/Common.h"
 #include "ppbox/peer/Peer.h"
 #include "ppbox/peer/Error.h"
+#include "ppbox/peer/VodPeerSource.h"
+#include "ppbox/peer/LivePeerSource.h"
+
+#include <ppbox/common/SourceBase.h>
 
 #include <ppbox/peer_worker/Name.h>
 
@@ -54,6 +58,8 @@ namespace ppbox
 
         static const framework::network::NetName dns_vod_jump_server(PPBOX_DNS_VOD_JUMP);
         static const framework::network::NetName dns_vod_drag_server(PPBOX_DNS_VOD_DRAG);
+        PPBOX_REGISTER_SOURCE(ppvod, 2, LivePeerSource);
+        PPBOX_REGISTER_SOURCE(pplive, 2, VodPeerSource);
 
 #ifdef PPBOX_CONTAIN_PEER_WORKER
         Peer::Peer(
@@ -62,8 +68,8 @@ namespace ppbox
             , port_(9000)
         {
         
-			util::daemon::use_module<ppbox::peer_worker::WorkerModule>(daemon);															
-			util::daemon::use_module<ppbox::peer_worker::StatusProxy>(daemon);
+            util::daemon::use_module<ppbox::peer_worker::WorkerModule>(daemon);
+            util::daemon::use_module<ppbox::peer_worker::StatusProxy>(daemon);
         }
 #else
         Peer::Peer(
@@ -74,7 +80,7 @@ namespace ppbox
             , is_locked_(false)
         {
  
-			process_ = new Process;
+            process_ = new Process;
             timer_ = new Timer(timer_queue(), 
                 10, // 5 seconds
                 boost::bind(&Peer::check, this));
@@ -127,7 +133,7 @@ namespace ppbox
                     timer_->stop();
                 }
             }
-#endif			
+#endif            
             return ec;
         }
 
@@ -158,17 +164,17 @@ namespace ppbox
                     }
                 }
             }
-#endif			
+#endif            
         }
 
         bool Peer::is_alive()
         {
             error_code ec;
 #ifdef PPBOX_CONTAIN_PEER_WORKER
- 			return true;
+             return true;
  #else
 
-			if (is_locked_) {
+            if (is_locked_) {
                 return process_ && process_->is_alive(ec);
             } else {
                 framework::process::Process process;
@@ -176,7 +182,7 @@ namespace ppbox
                 process.open(cmd_file, ec);
                 return !ec;
             }
- #endif 			
+ #endif             
         }
 
         void Peer::shutdown()
@@ -200,8 +206,8 @@ namespace ppbox
             if (is_locked_) {
                 mutex_.unlock();
                 is_locked_ = false;
-            }	
-#endif			
+            }    
+#endif            
         }
 
         std::string Peer::version()
