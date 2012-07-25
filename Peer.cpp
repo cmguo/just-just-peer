@@ -42,12 +42,16 @@ using namespace boost::system;
 FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("Peer", 0)
 
 
-#ifndef PPBOX_DNS_VOD_JUMP
-#define PPBOX_DNS_VOD_JUMP "(tcp)(v4)dt.api.pplive.com:80"
+#ifndef PPBOX_DNS_DOWNLOAD_JUMP
+#define PPBOX_DNS_DOWNLOAD_JUMP "(tcp)(v4)dt.api.pplive.com:80"
 #endif
 
-#ifndef PPBOX_DNS_VOD_DRAG
-#define PPBOX_DNS_VOD_DRAG "(tcp)(v4)drag.api.pplive.com:80"
+#ifndef PPBOX_DNS_DOWNLOAD_DRAG
+#define PPBOX_DNS_DOWNLOAD_DRAG "(tcp)(v4)drag.api.pplive.com:80"
+#endif
+
+#ifndef PPBOX_DNS_DOWNLOAD_FULL_DRAG
+#define PPBOX_DNS_DOWNLOAD_FULL_DRAG "(tcp)(v4)d.150hi.com:80"
 #endif
 
 #define MAC_PEER_WORKER "peer_worker"
@@ -57,8 +61,9 @@ namespace ppbox
     namespace peer
     {
 
-        DEFINE_DOMAIN_NAME(dns_download_vod_jump_server,PPBOX_DNS_VOD_JUMP);
-        DEFINE_DOMAIN_NAME(dns_download_vod_drag_server,PPBOX_DNS_VOD_DRAG);
+        DEFINE_DOMAIN_NAME(dns_download_vod_jump_server,PPBOX_DNS_DOWNLOAD_JUMP);
+        DEFINE_DOMAIN_NAME(dns_download_vod_drag_server,PPBOX_DNS_DOWNLOAD_DRAG);
+        DEFINE_DOMAIN_NAME(dns_download_vod_drag_full_server,PPBOX_DNS_DOWNLOAD_FULL_DRAG);
         PPBOX_REGISTER_SOURCE(ppvod, 2, LivePeerSource);
         PPBOX_REGISTER_SOURCE(pplive, 2, VodPeerSource);
 
@@ -328,8 +333,8 @@ namespace ppbox
 
 
             framework::string::Url url("http://localhost/");
-            url.host(dns_download_vod_drag_server.host());
-            url.svc(dns_download_vod_drag_server.svc());
+            url.host(dns_download_vod_drag_full_server.host());
+            url.svc(dns_download_vod_drag_full_server.svc());
             url.path("/" + playlink + "0drag");
             url.param("type", client_type);
 

@@ -5,6 +5,7 @@
 
 #include "ppbox/peer/Mp4Merge.h"
 #include "ppbox/peer/Peer.h"
+#include "ppbox/peer/BigMp4Statistic.h"
 
 #include <ppbox/mux/tool/Sink.h>
 
@@ -21,6 +22,7 @@ namespace ppbox
     {
 
         class BigMp4
+            : public BigMp4Statistic
         {
         public:
 
@@ -70,11 +72,15 @@ namespace ppbox
                 , std::ostream*);
 
             void async_tranfer_bighead(
-                std::ostream*);
+                boost::uint64_t,
+                boost::uint64_t, 
+                std::ostream* );
 
         private:
 
             void begin_fetch_head();
+
+            void begin_fetch_tail();
 
             // bool 是否有完整头  , 下载的起始位置
             void check_head(bool& full_head,boost::uint32_t& size);
@@ -97,6 +103,10 @@ namespace ppbox
             void download_handler(
                 boost::system::error_code const & ec
                 ,std::size_t bytes_transferred);
+
+            void download_big_mp4_head_handler(
+                boost::system::error_code const & ec, 
+                std::size_t bytes_transferred);
 
             // jump、 drag------
             void begin_jump();
@@ -144,6 +154,8 @@ namespace ppbox
                     fetch_head,
                     download_mid_header,
                     download_end_header,
+                    download_bighead_header,
+                    download_bighead_tail,
                     download_mid_body,
                     download_end_body,
                 };
@@ -162,13 +174,16 @@ namespace ppbox
 
             boost::uint64_t recv_size_; //已下载多少
             boost::uint64_t down_load_size_; //需要下载多少
+            boost::uint64_t down_load_begin_offset_;
 
-            //当前下载的mp4头大小
+            //当前下载的mp4头大小(mdat前的数据)
             boost::uint32_t head_size_;
             //有效下载位置
             boost::uint32_t cur_size_;
             //数据部份总大小
             boost::uint32_t body_size_;
+            //尾部数据总大小
+            boost::uint32_t tail_size_;
 
 
             std::ostream * stream_out_; //aync_transfer时保存的流

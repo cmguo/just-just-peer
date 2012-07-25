@@ -20,6 +20,7 @@ namespace ppbox
         {
             boost::uint64_t head_length;
             boost::uint64_t file_length;
+            boost::uint64_t offset;
             boost::uint32_t duration;   // 分段时长（毫秒）
             std::string va_rid;
             boost::uint32_t duration_offset;    // 相对起始的时长起点，（毫秒）
@@ -30,6 +31,7 @@ namespace ppbox
             VodSegment()
                 : head_length(0)
                 , file_length(0)
+                , offset(0)
                 , duration(0)
                 , duration_offset(0)
                 , duration_offset_us(0)
@@ -42,10 +44,11 @@ namespace ppbox
                 typename Archive
             >
             void serialize(
-                Archive & ar)
+            Archive & ar)
             {
                 float duration = (float)this->duration / 1000.0f;
-                ar & util::serialization::make_nvp("headlength", head_length)
+                ar & util::serialization::make_nvp("offset", offset)
+                    & util::serialization::make_nvp("headlength", head_length)
                     & util::serialization::make_nvp("filesize", file_length)
                     & util::serialization::make_nvp("duration", duration)
                     & util::serialization::make_nvp("varid", va_rid);
@@ -66,9 +69,9 @@ namespace ppbox
                 : VodSegment(r)
             {
                 std::string rid;
-                map_find(r.va_rid, "rid", rid, "&");
-                map_find(r.va_rid, "blocksize", this->block_size, "&");
-                map_find(r.va_rid, "blocknum", this->block_num, "&");
+                framework::string::map_find(r.va_rid, "rid", rid, "&");
+                framework::string::map_find(r.va_rid, "blocksize", this->block_size, "&");
+                framework::string::map_find(r.va_rid, "blocknum", this->block_num, "&");
 
                 this->va_rid = rid;
             }

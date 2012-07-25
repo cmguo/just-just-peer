@@ -3,6 +3,7 @@
 #include "ppbox/peer/Common.h"
 #include "ppbox/peer/BigMp4.h"
 #include "ppbox/peer/Error.h"
+#include "ppbox/demux/DemuxerError.h"
 
 #include <ppbox/ppbox/Common.h>
 
@@ -15,6 +16,7 @@
 #include <framework/system/BytesOrder.h>
 #include <framework/logger/LoggerStreamRecord.h>
 using namespace framework::logger;
+using namespace framework::string;
 
 #include <boost/asio/read.hpp>
 #include <boost/asio/streambuf.hpp>
@@ -88,6 +90,7 @@ namespace ppbox
             ,head_size_(0)
             ,cur_size_(0)
             ,body_size_(0)
+            ,tail_size_(0)
             ,stream_out_(NULL)
             ,stream_down_(NULL)
             ,stream_tmp_(NULL)
@@ -156,7 +159,7 @@ namespace ppbox
             ,std::ostream &stream
             ,response_type const &resp)
         {
-            LOG_S(framework::logger::Logger::kLevelError,"[async_tranfer] iSize:"<<iSize);
+            LOG_S(framework::logger::Logger::kLevelError,"[async_tranfer] iSize:"<<iSize<<" head_size:"<<head_size_);
             open_step_ = StepType::fetch_head;
 
             resp_ = resp;
@@ -164,29 +167,51 @@ namespace ppbox
 
             boost::int32_t beg = 0;
 
-            if(iSize < head_size_)
-            {
+            if(iSize < head_size_) {
                 char szBuf[1024] = {0};
                 beg = 0;
-
-                //先发头部
                 boost::uint32_t iCount = 0;
-                boost::uint32_t iTotal = head_size_ - iSize;
-                stream_tmp_->seekg(iSize,std::ios::beg);
-                while(iTotal-iCount > 1024)
-                {
-                    stream_tmp_->read(szBuf,1024);
-                    stream_out_->write(szBuf,1024);
-                    iCount+=1024;
+                boost::uint32_t iTotal = 0;
+                //先发头部
+                if (mode_ == FetchMode::small_head) {
+                    iTotal = head_size_ - iSize;
+                    stream_tmp_->seekg(iSize, std::ios::beg);
+                    while(iTotal-iCount > 1024) {
+                        stream_tmp_->read(szBuf,1024);
+                        stream_out_->write(szBuf,1024);
+                        iCount+=1024;
+                    }
+                    stream_tmp_->read(szBuf,iTotal-iCount);
+                    stream_out_->write(szBuf,iTotal-iCount);
+                    //(*stream_out_)<<stream_tmp_->str();
+                } else {
+                    open_step_ = StepType::download_bighead_header;
+                    stream_tmp_->seekg(0, std::ios::end);
+                    boost::uint32_t begin_part_size = 0;
+                    stream_tmp_->seekg(0, std::ios::beg);
+                    iTotal = begin_part_size - iSize;
+                    if (iSize < begin_part_size) {
+                        stream_tmp_->seekg(iSize, std::ios::beg);
+                        while(iTotal-iCount > 1024) {
+                            stream_tmp_->read(szBuf,1024);
+                            stream_out_->write(szBuf,1024);
+                            iCount+=1024;
+                        }
+                        stream_tmp_->read(szBuf,iTotal-iCount);
+                        stream_out_->write(szBuf,iTotal-iCount);
+                        async_tranfer_bighead(begin_part_size, head_size_, stream_out_);
+                    } else {
+                        async_tranfer_bighead(iSize, head_size_, stream_out_);
+                    }
+                    return;
                 }
-
-                stream_tmp_->read(szBuf,iTotal-iCount);
-                stream_out_->write(szBuf,iTotal-iCount);
-                //(*stream_out_)<<stream_tmp_->str();
-            }
-            else
-            {
+            } else if (iSize < (head_size_ + body_size_)) {
                 beg = iSize - head_size_;
+            } else {
+                assert(mode_ == FetchMode::big_head && tail_size_ > 0);
+                open_step_ = StepType::download_bighead_tail;
+                async_tranfer_bighead(iSize, head_size_+body_size_+tail_size_, stream_out_);
+                return;
             }
             //下后面的
             async_tranfer_body(beg,stream_out_);
@@ -242,8 +267,8 @@ namespace ppbox
 
         boost::system::error_code BigMp4::get_total_size(boost::uint32_t& size)
         {
-            size = (body_size_+head_size_);
-            return boost::system::error_code();        
+            size = (body_size_+head_size_+tail_size_);
+            return boost::system::error_code();
         }
 
         void BigMp4::handle_async_open(boost::system::error_code const & ec)
@@ -255,9 +280,10 @@ namespace ppbox
 
             if (ec)
             {
-                if(open_step_ == StepType::jumping || open_step_ == StepType::draging)
+                if(open_step_ == StepType::jumping 
+                    || open_step_ == StepType::draging)
                 {
-                    close();	
+                    close();
                 }
                 open_step_ = StepType::closed;
                 response(ec);
@@ -304,7 +330,9 @@ namespace ppbox
                     {
                         //去重获取下体的大小
                         stream_tmp_->seekg(0,std::ios::beg);
-                        mp4_merge.vod_valid_segment_info(*stream_tmp_,segment_infos_,ec1);
+                        //mp4_merge.vod_valid_segment_info(*stream_tmp_,segment_infos_,ec1);
+                        head_size_ = drag_info_.segments[0].offset;
+                        LOG_S(framework::logger::Logger::kLevelDebug,"[handle_async_open], head_size: " << head_size_);
                     }
                     if (0 == body_size_) {
                         for(boost::uint32_t i = 0; i < segment_infos_.size(); ++i) 
@@ -312,8 +340,23 @@ namespace ppbox
                             //计算实际要下载体部大小
                             body_size_ += segment_infos_[i].file_length - segment_infos_[i].head_length;
                         }
-                    } 
+                    }
+                    tail_size_ = 0;
+                    if (head_size_ < 1024) {
+                        tail_size_ = drag_info_.video.filesize - head_size_ - body_size_;
+                    }
+                    open("xxx", head_size_, tail_size_, body_size_); // 目前统计只适合大头模式
                     response(ec1);
+                }
+                break;
+            case StepType::download_bighead_header:
+                {
+                    async_tranfer_body(0, stream_out_);
+                }
+                break;
+            case StepType::download_bighead_tail:
+                {
+                    response(ec);
                 }
                 break;
             case StepType::download_mid_body:
@@ -323,14 +366,18 @@ namespace ppbox
                 break;
             case StepType::download_end_body:
                 {
-                    response(ec);
+                    if (tail_size_ > 0) {
+                        begin_fetch_tail();
+                    } else {
+                        response(ec);
+                    }
                 }
                 break;
             default:
                 break;
             }
         }
-        
+
         void BigMp4::async_tranfer_samallhead(
             boost::int32_t iSize          //起始位置
             , std::ostream* stream)
@@ -373,13 +420,13 @@ namespace ppbox
             handle_async_open(ec);
         }
 
-        void BigMp4::async_tranfer_bighead(
+        void BigMp4::async_tranfer_bighead( 
+            boost::uint64_t begin, 
+            boost::uint64_t end, 
             std::ostream* stream)
         {
             http_callback_ = false;
-            //计算头部大小
             boost::system::error_code ec;
-            open_step_ = StepType::download_end_header;
 
             stream_down_ = stream;
 
@@ -389,27 +436,28 @@ namespace ppbox
             host_tmp.port(81);
             url_t.host(host_tmp.host());
             url_t.svc(host_tmp.svc());
-            url_t.path("/" + url_.path());
+            url_t.path("/" + url_.path() );
 
             util::protocol::HttpRequest request;
             request.head().method = util::protocol::HttpRequestHead::get;
             request.head().path = url_t.path_all();
             request.head().host.reset(url_t.host_svc());
-            request.head().range.reset(util::protocol::http_field::Range(0
-                ,drag_info_.video.filesize));
+            request.head().range.reset(util::protocol::http_field::Range(begin, end));
 
-            LOG_S(framework::logger::Logger::kLevelDebug,"[async_tranfer_bighead] Range from:"<<0
-                <<" to:"<<drag_info_.video.filesize
+            request.head().get_content(std::cout);
+            LOG_S(framework::logger::Logger::kLevelDebug,"[async_tranfer_bighead] Range from:"<<begin
+                <<" to:"<<end
                 <<" url:"<<url_t.to_string());
 
-            http_client_.close();
+            // http_client_.close();
             recv_size_ = 0;
+            down_load_size_ = end - begin;
+            down_load_begin_offset_ = begin;
 
+            http_client_.close();
             http_client_.async_open(request
                 ,boost::bind(&BigMp4::open_bighead_callback, this, _1));
         }
-
-
 
         struct BigHeadFinish
         {
@@ -445,7 +493,7 @@ namespace ppbox
             size_t init_stream_size_;
         };
 
-        void BigMp4::open_bighead_callback(boost::system::error_code const & ec)
+         void BigMp4::open_bighead_callback(boost::system::error_code const & ec)
         {
             http_callback_ = true ;
             if(ec)
@@ -455,7 +503,7 @@ namespace ppbox
             }
             else 
             {
-                if(NULL != stlostream_)
+                /*if(NULL != stlostream_)
                 {
                     delete stlostream_;
                 }
@@ -464,9 +512,15 @@ namespace ppbox
                 util::stream::async_transfer(
                     http_client_, 
                     *stlostream_, 
-                    boost::asio::buffer(buf_,10000),
+                    boost::asio::buffer(buf_,10000), 
                     BigHeadFinish(*stream_tmp_), 
-                    boost::bind(&BigMp4::down_bighead_callback, this, _1));
+                    boost::bind(&BigMp4::down_bighead_callback, this, _1));*/
+                // 不下载bighead数据
+                http_client_.response_head().get_content(std::cout);
+                boost::asio::async_read(http_client_,
+                    boost::asio::buffer(buf_, (down_load_size_-recv_size_>1024)?1024:(down_load_size_-recv_size_)),
+                    boost::asio::transfer_all(),
+                    boost::bind(&BigMp4::download_big_mp4_head_handler, this, _1, _2));
             }
 
         }
@@ -517,6 +571,8 @@ namespace ppbox
             {
                 if(bytes_transferred > 0)
                 {
+                    down_load_begin_offset_ += bytes_transferred;
+                    increase(bytes_transferred, down_load_begin_offset_);
                     recv_size_ += bytes_transferred;
                     boost::system::error_code ec1;
                     stream_down_->write(buf_.data(), bytes_transferred);
@@ -573,6 +629,41 @@ namespace ppbox
             }
         }
 
+        void BigMp4::download_big_mp4_head_handler(
+            boost::system::error_code const & ec, 
+            std::size_t bytes_transferred)
+        {
+            if(ec) {
+                LOG_S(framework::logger::Logger::kLevelError,"[download_big_mp4_head_handler] ec:"<<ec.message());
+                handle_async_open(ec);
+            } else {
+                if(bytes_transferred > 0) {
+                    down_load_begin_offset_ += bytes_transferred;
+                    increase(bytes_transferred, down_load_begin_offset_);
+                    recv_size_ += bytes_transferred;
+                    stream_down_->write(buf_.data(), bytes_transferred);
+                    if(!(*stream_down_))
+                    {
+                        boost::system::error_code ec1;
+                        ec1 = ppbox::peer::error::bad_file_format;
+                        handle_async_open(ec1);
+                        return;
+                    }
+                    if (down_load_size_ == 0) {
+                        handle_async_open(ec);
+                    } else {
+                        boost::asio::async_read(http_client_,
+                            boost::asio::buffer(buf_, (down_load_size_-recv_size_>1024)?1024:(down_load_size_-recv_size_)),
+                            boost::asio::transfer_all(),
+                            boost::bind(&BigMp4::download_big_mp4_head_handler, this, _1, _2));
+                    }
+                } else {
+                    LOG_S(framework::logger::Logger::kLevelError,"[download_big_mp4_head_handler] download size < 1");
+                    handle_async_open(ec);
+                }
+            }
+        }
+
         void BigMp4::async_tranfer_body(
             boost::int32_t iSize
             , std::ostream* stream)
@@ -584,6 +675,7 @@ namespace ppbox
 
             stream_down_ = stream;
             recv_size_ = iSize; //body的位置 是属于第几个分段
+            down_load_begin_offset_ = recv_size_ + head_size_;
 
             boost::uint64_t body_size = 0;
             for(size_t ii = 0; ii <  segment_infos_.size(); ++ii)
@@ -630,7 +722,7 @@ namespace ppbox
             util::protocol::HttpRequest request;
             get_request(index_,jump_info_.server_host,request,ec);
             //get_cdn_request(index_,jump_info_.server_host,request,ec);
-            //request.head().get_content(std::cout);
+            request.head().get_content(std::cout);
             http_client_.close();
 
             http_client_.async_open(request
@@ -656,7 +748,7 @@ namespace ppbox
 
             util::protocol::HttpRequest request;
             get_request(index_,jump_info_.server_host,request,ec);
-            //request.head().get_content(std::cout);
+            request.head().get_content(std::cout);
             http_client_.close();
 
             http_client_.async_open(request
@@ -670,7 +762,6 @@ namespace ppbox
         void BigMp4::begin_fetch_head()
         {
             open_step_ = StepType::download_end_header;
-
             segment_infos_.clear();
             for(boost::uint32_t i = 0; i < drag_info_.segments.size(); ++i) 
             {
@@ -678,6 +769,12 @@ namespace ppbox
                 seg.duration = drag_info_.segments[i].duration;
                 seg.file_length = drag_info_.segments[i].file_length;
                 seg.head_length = drag_info_.segments[i].head_length;
+                if (mode_ == FetchMode::big_head
+                    && i < (drag_info_.segments.size()-1)) {
+                        assert(seg.file_length >= drag_info_.segments[i+1].offset - drag_info_.segments[i].offset);
+                        seg.file_length = 
+                            drag_info_.segments[i+1].offset - drag_info_.segments[i].offset + seg.head_length;
+                }
                 segment_infos_.push_back(seg);
             }
 
@@ -699,12 +796,21 @@ namespace ppbox
                 else
                 {
                     assert(0 == size);
-                    //下大头
-                    async_tranfer_bighead(stream_tmp_);
+                    // stream_tmp_->seekg(0, std::ios::beg);
+                    handle_async_open(boost::system::error_code());
                 }
                 return;
             }
             handle_async_open(boost::system::error_code());
+        }
+
+        void BigMp4::begin_fetch_tail()
+        {
+            open_step_ = StepType::download_bighead_tail;
+            async_tranfer_bighead(
+                head_size_+body_size_, 
+                head_size_+body_size_+tail_size_,
+                stream_out_);
         }
 
         void BigMp4::check_head(bool& full_head,boost::uint32_t& size)
@@ -718,21 +824,26 @@ namespace ppbox
             stream_tmp_->seekg(0,std::ios::end);
             boost::uint32_t total_size = stream_tmp_->tellg();
             boost::uint32_t head_size = mp4_head_size(*stream_tmp_);
-            if (head_size > total_size) //没一个完整的head
-            {
-                full_head = false;
-                size = 0;
-                return;
-            }
 
             if(FetchMode::big_head == mode_)
             {
-                head_size_ = head_size; 
-                full_head = true;
-                size = total_size;
+                head_size_ = drag_info_.segments[0].offset;
+                if (total_size < 1024) {
+                    full_head = false;
+                    size = 0;
+                } else {
+                    full_head = true;
+                    size = 1024;
+                }
             }
             else
             {
+                if (head_size > total_size) //没一个完整的head
+                {
+                    full_head = false;
+                    size = 0;
+                    return;
+                }
                 //要考虑到只有一个分段的
                 if(head_size ==segment_infos_[0].head_length
                     && segment_infos_.size() > 1)
