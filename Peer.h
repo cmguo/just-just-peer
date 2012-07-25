@@ -6,6 +6,11 @@
 #include "ppbox/peer/VodInfo.h"
 
 #include <ppbox/common/HttpFetchManager.h>
+#include <ppbox/common/PortManager.h>
+
+#ifndef PPBOX_DISABLE_DAC
+#include <ppbox/dac/Dac.h>
+#endif
 
 #ifndef PPBOX_CONTAIN_PEER_WORKER
 #include <framework/process/NamedMutex.h>
@@ -99,6 +104,11 @@ namespace ppbox
             bool is_lock();
 
         private:
+#ifndef PPBOX_DISABLE_DAC
+            ppbox::dac::Dac& dac_;
+#endif
+            ppbox::common::PortManager &portMgr_;
+
             boost::uint16_t port_;
 
 #ifndef PPBOX_CONTAIN_PEER_WORKER

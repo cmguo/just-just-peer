@@ -12,7 +12,6 @@
 
 #ifndef PPBOX_DISABLE_DAC
 #include <ppbox/dac/Dac.h>
-using namespace ppbox::dac;
 #endif
 
 
@@ -51,6 +50,8 @@ FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("Peer", 0)
 #define PPBOX_DNS_VOD_DRAG "(tcp)(v4)drag.api.pplive.com:80"
 #endif
 
+#define MAC_PEER_WORKER "peer_worker"
+
 namespace ppbox
 {
     namespace peer
@@ -65,9 +66,13 @@ namespace ppbox
         Peer::Peer(
             util::daemon::Daemon & daemon)
             : HttpFetchManager(daemon)
+#ifndef PPBOX_DISABLE_DAC
+            , dac_(util::daemon::use_module<ppbox::dac::Dac>(daemon))
+#endif
+            , portMgr_(util::daemon::use_module<ppbox::common::PortManager>(daemon))
             , port_(9000)
         {
-        
+
             util::daemon::use_module<ppbox::peer_worker::WorkerModule>(daemon);
             util::daemon::use_module<ppbox::peer_worker::StatusProxy>(daemon);
         }
@@ -75,11 +80,15 @@ namespace ppbox
         Peer::Peer(
             util::daemon::Daemon & daemon)
             : HttpFetchManager(daemon)
+#ifndef PPBOX_DISABLE_DAC
+            , dac_(util::daemon::use_module<ppbox::dac::Dac>(daemon))
+#endif
+            , portMgr_(util::daemon::use_module<ppbox::common::PortManager>(daemon))
             , port_(9000)
             , mutex_(9000)
             , is_locked_(false)
         {
- 
+
             process_ = new Process;
             timer_ = new Timer(timer_queue(), 
                 10, // 5 seconds
@@ -111,18 +120,26 @@ namespace ppbox
         {
             error_code ec;
             LOG_S(Logger::kLevelEvent, "[startup]");
+#ifndef PPBOX_DISABLE_DAC
+            dac_.set_vod_version(version());
+            dac_.set_vod_name(name());
+#endif
 #ifndef PPBOX_CONTAIN_PEER_WORKER
             timer_->start();
 
             if (is_lock()) {
                 LOG_S(Logger::kLevelEvent, "[startup] try_lock");
-
+#ifdef __APPLE__
+                boost::filesystem::path cmd_file(MAC_PEER_WORKER);
+#else
                 boost::filesystem::path cmd_file(ppbox::peer_worker::name_string());
+#endif
                 Process::CreateParamter param;
                 param.wait = true;
                 process_->open(cmd_file, param, ec);
                 if (!ec) {
-                    LOG_S(Logger::kLevelEvent, "[startup] ok");
+                    portMgr_.get_port(ppbox::common::vod,port_);
+                    LOG_S(Logger::kLevelEvent, "[startup] ok port:"<<port_);
                 } else {
                     LOG_S(Logger::kLevelAlarm, "[startup] ec = " << ec.message());
                     port_ = 0;
@@ -133,7 +150,10 @@ namespace ppbox
                     timer_->stop();
                 }
             }
-#endif            
+#else
+			portMgr_.get_port(ppbox::common::vod,port_);
+			LOG_S(Logger::kLevelEvent, "[startup] ok port:"<<port_);
+#endif
             return ec;
         }
 
@@ -147,15 +167,20 @@ namespace ppbox
 
 #ifndef PPBOX_DISABLE_DAC
                     util::daemon::use_module<ppbox::dac::Dac>(get_daemon())
-                        .run_info(CoreType::vod);
+                        .run_info(ppbox::dac::CoreType::vod);
 #endif
                     process_->close(ec);
+#ifdef __APPLE__
+                    boost::filesystem::path cmd_file(MAC_PEER_WORKER);
+#else
                     boost::filesystem::path cmd_file(ppbox::peer_worker::name_string());
+#endif
                     Process::CreateParamter param;
                     param.wait = true;
                     process_->open(cmd_file, param, ec);
                     if (!ec) {
-                        LOG_S(Logger::kLevelEvent, "[check] ok");
+                        portMgr_.get_port(ppbox::common::vod,port_);
+                        LOG_S(Logger::kLevelEvent, "[check] ok port:"<<port_);
                     } else {
                         LOG_S(Logger::kLevelAlarm, "[check] ec = " << ec.message());
                         port_ = 0;
@@ -164,25 +189,29 @@ namespace ppbox
                     }
                 }
             }
-#endif            
+#endif
         }
 
         bool Peer::is_alive()
         {
             error_code ec;
 #ifdef PPBOX_CONTAIN_PEER_WORKER
-             return true;
- #else
+            return true;
+#else
 
             if (is_locked_) {
                 return process_ && process_->is_alive(ec);
             } else {
                 framework::process::Process process;
+#ifdef __APPLE__
+                boost::filesystem::path cmd_file(MAC_PEER_WORKER);
+#else
                 boost::filesystem::path cmd_file(ppbox::peer_worker::name_string());
+#endif
                 process.open(cmd_file, ec);
                 return !ec;
             }
- #endif             
+#endif
         }
 
         void Peer::shutdown()
@@ -287,7 +316,7 @@ namespace ppbox
             resq(ec1,jump_info);
         }
 
-        
+
 
         ppbox::common::FetchHandle Peer::async_fetch_drag(
             std::string const & playlink, 
@@ -309,7 +338,7 @@ namespace ppbox
                 ,boost::bind(&Peer::drag_callback,this,resq,_1,_2)
                 );
         }
-        
+
         void Peer::drag_callback(
             drag_response_type const & resq
             ,boost::system::error_code const & ec

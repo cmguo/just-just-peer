@@ -59,8 +59,6 @@ namespace ppbox
             boost::system::error_code get_valid_size(boost::uint32_t& size);//已下载多少
             boost::system::error_code get_total_size(boost::uint32_t& size); //需要下载的总大小
 
-
-
         private:
 
             void async_tranfer_samallhead(
@@ -72,8 +70,7 @@ namespace ppbox
                 , std::ostream*);
 
             void async_tranfer_bighead(
-                 std::ostream*);
-
+                std::ostream*);
 
         private:
 
@@ -85,20 +82,15 @@ namespace ppbox
             //状态机制控制函数
             void handle_async_open(boost::system::error_code const & ec);
 
-
-
             //下分段体
             void down_load_segment_body(boost::uint64_t recv_size = 0);
 
             //下分段头
             void down_load_segment_header(boost::uint64_t recv_size = 0);
 
-
-
             //下Big head回调
             void open_bighead_callback(boost::system::error_code const & ec);
             void down_bighead_callback(boost::system::error_code const & ec);
-
 
             //下分段头与分段体的回调
             void down_async_open(boost::system::error_code const & ec);
@@ -106,26 +98,30 @@ namespace ppbox
                 boost::system::error_code const & ec
                 ,std::size_t bytes_transferred);
 
-
-// jump、 drag------
+            // jump、 drag------
             void begin_jump();
 
             void jump_callback(
                 boost::system::error_code const & ec
-                 ,ppbox::peer::VodJumpInfo const & jump_info);
+                ,ppbox::peer::VodJumpInfo const & jump_info);
 
-             void begin_drag();
+            void begin_drag();
 
             void drag_callback(
                 boost::system::error_code const & ec
-               ,ppbox::peer::VodDragInfoNew const & drag_info);
+                ,ppbox::peer::VodDragInfoNew const & drag_info);
 
-// tool ----------
-
+            // tool ----------
 
             std::string get_key() const;
 
             boost::system::error_code get_request(
+                size_t segment,
+                framework::network::NetName & addr,
+                util::protocol::HttpRequest & request,
+                boost::system::error_code & ec);
+
+            boost::system::error_code get_cdn_request(
                 size_t segment,
                 framework::network::NetName & addr,
                 util::protocol::HttpRequest & request,
@@ -136,8 +132,8 @@ namespace ppbox
             std::string parse_url(
                 std::string const &url,
                 boost::system::error_code& ec);
-        
-		private:
+
+        private:
             struct StepType
             {
                 enum Enum
@@ -157,7 +153,7 @@ namespace ppbox
         private:
             boost::asio::io_service& io_svc_;
             Peer& vod_;
-            
+
             ppbox::peer::VodJumpInfo jump_info_;
             ppbox::peer::VodDragInfoNew drag_info_;
 
@@ -179,8 +175,8 @@ namespace ppbox
             std::ostream* stream_down_; //下载时用到的流
             std::iostream* stream_tmp_; //aync_open时保存的流
             util::stream::StlOStream *stlostream_; //只用于下载大头时
-            
-            
+
+
             response_type resp_;
             StepType::Enum open_step_;
             framework::string::Url url_;
@@ -195,9 +191,12 @@ namespace ppbox
             ppbox::common::FetchHandle handle_;
 
             std::vector<ppbox::avformat::SegmentInfo> segment_infos_;
+            bool http_callback_;                                                                                                                            
+            bool on_jumped_;
+            bool on_draged_;
             Mp4Merge mp4_merge;
         };
     } // namespace peer
 } // namespace ppbox
 
-#endif // _PPBOX_peer_VOD_H_
+#endif // _PPBOX_PEER_BIGMP4_H_
