@@ -3,9 +3,8 @@
 #ifndef _PPBOX_PEER_PEER_H_
 #define _PPBOX_PEER_PEER_H_
 
-#include "ppbox/peer/VodInfo.h"
+#include <ppbox/cdn/VodInfo.h>
 
-#include <ppbox/common/HttpFetchManager.h>
 #include <ppbox/common/PortManager.h>
 
 #ifndef PPBOX_DISABLE_DAC
@@ -30,19 +29,9 @@ namespace ppbox
     {
 
         class Peer
-            : public ppbox::common::HttpFetchManager
+            : public ppbox::common::CommonModuleBase<Peer>
         {
         public:
-
-            typedef boost::function<void (
-                boost::system::error_code const &, 
-                ppbox::peer::VodJumpInfo const & jump_info)
-            > jump_response_type;
-
-            typedef boost::function<void (
-                boost::system::error_code const &, 
-                ppbox::peer::VodDragInfoNew const& drag_info)
-            > drag_response_type;
 
             Peer(
                 util::daemon::Daemon & daemon);
@@ -53,30 +42,6 @@ namespace ppbox
             virtual boost::system::error_code startup();
 
             virtual void shutdown();
-
-        public:
-
-        ppbox::common::FetchHandle async_fetch_jump(
-            std::string const & playlink, 
-            std::string const & client_type,
-            jump_response_type const & resq);
-
-        ppbox::common::FetchHandle async_fetch_drag(
-            std::string const & playlink, 
-            std::string const & client_type, 
-            ppbox::peer::VodJumpInfo const & jump_info,
-            drag_response_type const & resq);
-
-        private:
-            void jump_callback(
-                jump_response_type const & resq
-                ,boost::system::error_code const & ec
-                ,boost::asio::streambuf & buf);
-
-            void drag_callback(
-                drag_response_type const & resq
-                ,boost::system::error_code const & ec
-                ,boost::asio::streambuf & buf);
 
         public:
             boost::uint16_t port() const

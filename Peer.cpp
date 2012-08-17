@@ -39,38 +39,20 @@ using namespace framework::logger;
 #include <boost/bind.hpp>
 using namespace boost::system;
 
-FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("Peer", 0)
-
-
-#ifndef PPBOX_DNS_DOWNLOAD_JUMP
-#define PPBOX_DNS_DOWNLOAD_JUMP "(tcp)(v4)dt.api.pplive.com:80"
-#endif
-
-#ifndef PPBOX_DNS_DOWNLOAD_DRAG
-#define PPBOX_DNS_DOWNLOAD_DRAG "(tcp)(v4)drag.api.pplive.com:80"
-#endif
-
-#ifndef PPBOX_DNS_DOWNLOAD_FULL_DRAG
-#define PPBOX_DNS_DOWNLOAD_FULL_DRAG "(tcp)(v4)d.150hi.com:80"
-#endif
-
-#define MAC_PEER_WORKER "peer_worker"
-
 namespace ppbox
 {
     namespace peer
     {
 
-        DEFINE_DOMAIN_NAME(dns_download_vod_jump_server,PPBOX_DNS_DOWNLOAD_JUMP);
-        DEFINE_DOMAIN_NAME(dns_download_vod_drag_server,PPBOX_DNS_DOWNLOAD_DRAG);
-        DEFINE_DOMAIN_NAME(dns_download_vod_drag_full_server,PPBOX_DNS_DOWNLOAD_FULL_DRAG);
-        PPBOX_REGISTER_SOURCE(ppvod, 2, LivePeerSource);
-        PPBOX_REGISTER_SOURCE(pplive, 2, VodPeerSource);
+        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("Peer", 0)
+
+        PPBOX_REGISTER_SOURCE(ppvod, VodPeerSource);
+        PPBOX_REGISTER_SOURCE(pplive2, LivePeerSource);
 
 #ifdef PPBOX_CONTAIN_PEER_WORKER
         Peer::Peer(
             util::daemon::Daemon & daemon)
-            : HttpFetchManager(daemon)
+            : ppbox::common::CommonModuleBase<Peer>(daemon, "Peer")
 #ifndef PPBOX_DISABLE_DAC
             , dac_(util::daemon::use_module<ppbox::dac::Dac>(daemon))
 #endif
@@ -84,7 +66,7 @@ namespace ppbox
 #else
         Peer::Peer(
             util::daemon::Daemon & daemon)
-            : HttpFetchManager(daemon)
+            : ppbox::common::CommonModuleBase<Peer>(daemon, "Peer")
 #ifndef PPBOX_DISABLE_DAC
             , dac_(util::daemon::use_module<ppbox::dac::Dac>(daemon))
 #endif
@@ -265,118 +247,6 @@ namespace ppbox
             return is_locked_;
         }
 #endif
-
-        ppbox::common::FetchHandle Peer::async_fetch_jump(
-            std::string const & playlink, 
-            std::string const & client_type,
-            jump_response_type const & resq)
-        {
-            LOG_S(framework::logger::Logger::kLevelDebug,"[async_fetch_jump]");
-
-            framework::string::Url url("http://localhost/");
-            url.host(dns_download_vod_jump_server.host());
-            url.svc(dns_download_vod_jump_server.svc());
-            url.path("/" + playlink + "dt");
-            url.param("type", client_type);
-            url.param("t", format(rand()));
-
-            return  async_fetch(url
-                ,dns_download_vod_jump_server
-                ,boost::bind(&Peer::jump_callback,this,resq,_1,_2)
-                );
-        }
-
-        void Peer::jump_callback(
-            jump_response_type const & resq
-            ,boost::system::error_code const & ec
-            ,boost::asio::streambuf & buf)
-        {
-            boost::system::error_code ec1 = ec;
-            ppbox::peer::VodJumpInfoNoDrag jump_info;
-
-            if(!ec1)
-            {
-                std::string buffer = boost::asio::buffer_cast<char const *>(buf.data());
-                LOG_S(Logger::kLevelDebug2, "[jump_callback] jump buffer: " << buffer);
-
-                boost::asio::streambuf buf2;
-                util::buffers::buffer_copy(
-                    buf2.prepare(buf.size()), 
-                    buf.data());
-                buf2.commit(buf.size());
-
-                util::archive::XmlIArchive<> ia(buf2);
-                ia >> (ppbox::peer::VodJumpInfo &)jump_info;
-                if (!ia) 
-                {
-                    util::archive::XmlIArchive<> ia2(buf);
-                    ia2 >> jump_info;
-                    if (!ia2) 
-                    {
-                        ec1 = ppbox::peer::error::bad_xml_format;
-                    }
-                }
-            }
-
-            resq(ec1,jump_info);
-        }
-
-
-
-        ppbox::common::FetchHandle Peer::async_fetch_drag(
-            std::string const & playlink, 
-            std::string const & client_type, 
-            ppbox::peer::VodJumpInfo const & jump_info,
-            drag_response_type const & resq)
-        {
-            LOG_S(framework::logger::Logger::kLevelDebug,"[async_fetch_drag]");
-
-
-            framework::string::Url url("http://localhost/");
-            url.host(dns_download_vod_drag_full_server.host());
-            url.svc(dns_download_vod_drag_full_server.svc());
-            url.path("/" + playlink + "0drag");
-            url.param("type", client_type);
-
-            return  async_fetch(url
-                ,jump_info.server_host
-                ,boost::bind(&Peer::drag_callback,this,resq,_1,_2)
-                );
-        }
-
-        void Peer::drag_callback(
-            drag_response_type const & resq
-            ,boost::system::error_code const & ec
-            ,boost::asio::streambuf & buf)
-        {
-            boost::system::error_code ec1 = ec;
-            ppbox::peer::VodDragInfoNew drag_info;
-            if(!ec1)
-            {
-                std::string buffer = boost::asio::buffer_cast<char const *>(buf.data());
-                LOG_S(Logger::kLevelDebug2, "[drag_callback] drag buffer: " << buffer);
-
-                boost::asio::streambuf buf2;
-                util::buffers::buffer_copy(buf2.prepare(buf.size()), buf.data());
-                buf2.commit(buf.size());
-
-                util::archive::XmlIArchive<> ia(buf2);
-                ia >> (ppbox::peer::VodDragInfoNew &)drag_info;
-                if (!ia) 
-                {
-                    util::archive::XmlIArchive<> ia2(buf);
-                    ppbox::peer::VodDragInfo drag_info_old;
-                    ia2 >> drag_info_old;
-                    if (!ia2) {
-                        ec1 = ppbox::peer::error::bad_xml_format;
-                    } else {
-                        drag_info = drag_info_old;
-                    }
-                }
-            }
-            resq(ec1,drag_info);
-        }
-
 
     } // namespace Peer
 } // namespace ppbox

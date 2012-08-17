@@ -3,6 +3,10 @@
 #include "ppbox/peer/Common.h"
 #include "ppbox/peer/VodPeerSource.h"
 
+#include <framework/string/Parse.h>
+#include <framework/string/Format.h>
+using namespace framework::string;
+
 #include <framework/logger/LoggerStreamRecord.h>
 
 namespace ppbox
@@ -11,8 +15,6 @@ namespace ppbox
     {
 
         FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("VodPeerSource", 0);
-
-
 
         VodPeerSource::VodPeerSource(
             boost::asio::io_service & ios_svc)
@@ -24,30 +26,39 @@ namespace ppbox
         {
         }
 
+        framework::string::Url VodPeerSource::get_peer_url(
+            framework::string::Url const & url)
+        {
+            framework::string::Url cdn_url = url;
+            framework::string::Url peer_url("http://127.0.0.1:0000/ppvaplaybyopen?");
+            peer_url.svc(format(get_port()));
+            if ("" != cdn_url.param("cdn.drag.segment")) {
+                framework::string::Url drag_url(cdn_url.param("cdn.drag.segment"));
+                peer_url.param("blocksize", drag_url.param("blocksize"));
+                peer_url.param("filelength", drag_url.param("filelength"));
+                peer_url.param("headlength", drag_url.param("headlength"));
+                peer_url.param("rid", drag_url.param("rid"));
+                cdn_url.param("cdn.drag.segment","");
+            }
+            framework::string::Url jump_url(cdn_url.param("cdn.jump"));
+            peer_url.param("BWType", jump_url.param("bwtype"));
+            cdn_url.param("cdn.jump", "");
+            std::string cdn_str = framework::string::Url::encode(cdn_url.to_string());
+            peer_url.param("url", cdn_str);
+            addr_ = cdn_url.host_svc();
+
+            return peer_url;
+        }
+
         boost::system::error_code VodPeerSource::open(
             framework::string::Url const & url,
             boost::uint64_t beg, 
             boost::uint64_t end, 
             boost::system::error_code & ec)
         {
-            framework::string::Url cdn_url(url.to_string());
-            framework::string::Url peer_url("http://127.0.0.1:9000/ppvaplaybyopen?" + url.param("rid"));
-            peer_url.param("blocksize", url.param("blocksize"));
-            peer_url.param("filelength", url.param("filelength"));
-            peer_url.param("headlength", url.param("headlength"));
-            peer_url.param("rid", url.param("rid"));
-            cdn_url.param("blocksize","");
-            cdn_url.param("filelength","");
-            cdn_url.param("headlength","");
-            cdn_url.param("rid","");
-            std::string cdn_str = framework::string::Url::encode(cdn_url.to_string());
-            peer_url.param("url", cdn_str);
+            flag_ = true;
+            framework::string::Url peer_url = get_peer_url(url);
 
-            LOG_S(framework::logger::Logger::kLevelDebug,"[get_request] peer_work url:"<<peer_url.to_string()
-                <<" from:"<<beg
-                <<" to:"<<end);
-
-            addr_ = cdn_url.host_svc();
             util::protocol::HttpRequestHead & head = request_.head();
             head.path = peer_url.path_all();
             if (beg != 0 || end != (boost::uint64_t)-1) {
@@ -55,14 +66,8 @@ namespace ppbox
             } else {
                 head.range.reset();
             }
-            std::ostringstream oss;
-            head.get_content(oss);
-            LOG_STR(framework::logger::Logger::kLevelDebug2, oss.str().c_str());
-            http_.bind_host(addr_, ec);
-            http_.open(request_, ec);
-            http_.request().head().get_content(std::cout);
 
-            return ec;
+            return PeerSource::open(peer_url, beg, end, ec);
         }
 
         void VodPeerSource::async_open(
@@ -72,23 +77,8 @@ namespace ppbox
             response_type const & resp)
         {
             flag_ = true;
-            framework::string::Url cdn_url(url.to_string());
-            framework::string::Url peer_url("http://127.0.0.1:9000/ppvaplaybyopen?" + url.param("rid"));
-            peer_url.param("blocksize", url.param("blocksize"));
-            peer_url.param("filelength", url.param("filelength"));
-            peer_url.param("headlength", url.param("headlength"));
-            peer_url.param("rid", url.param("rid"));
-            cdn_url.param("blocksize","");
-            cdn_url.param("filelength","");
-            cdn_url.param("headlength","");
-            cdn_url.param("rid","");
-            std::string cdn_str = framework::string::Url::encode(cdn_url.to_string());
-            peer_url.param("url", cdn_str);
-            LOG_S(framework::logger::Logger::kLevelDebug,"[get_request] peer_work url:"<<peer_url.to_string()
-                <<" from:"<<beg
-                <<" to:"<<end);
 
-            addr_ = cdn_url.host_svc();
+            framework::string::Url peer_url = get_peer_url(url);
             boost::system::error_code ec;
             util::protocol::HttpRequestHead & head = request_.head();
             head.path = peer_url.path_all();
@@ -97,11 +87,8 @@ namespace ppbox
             } else {
                 head.range.reset();
             }
-            std::ostringstream oss;
-            head.get_content(oss);
-            LOG_STR(framework::logger::Logger::kLevelDebug2, oss.str().c_str());
-            http_.bind_host(addr_, ec);
-            http_.async_open(request_, resp);
+
+            PeerSource::async_open(peer_url, beg, end, resp);
         }
 
     }//peer

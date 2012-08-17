@@ -7,6 +7,7 @@
 
 #include <ppbox/common/HttpSource.h>
 
+
 namespace ppbox
 {
     namespace peer
@@ -34,6 +35,9 @@ namespace ppbox
 
             void set_demux_statu();
 
+        private:
+            framework::string::Url get_peer_url(
+                framework::string::Url const & url);
         };
 
     }//peer

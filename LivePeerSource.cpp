@@ -3,6 +3,9 @@
 #include "ppbox/peer/LivePeerSource.h"
 
 #include <framework/logger/LoggerStreamRecord.h>
+#include <framework/string/Format.h>
+
+using namespace framework::string;
 
 namespace ppbox
 {
@@ -17,13 +20,9 @@ namespace ppbox
         {
         }
 
-        boost::system::error_code LivePeerSource::open(
-            framework::string::Url const & url,
-            boost::uint64_t beg, 
-            boost::uint64_t end, 
-            boost::system::error_code & ec)
+        framework::string::Url LivePeerSource::get_peer_url(
+            framework::string::Url const & url )
         {
-            flag_ = true;
             std::string url_str = url.to_string();
             std::string::size_type pos = url_str.find("block");
             assert(pos != std::string::npos);
@@ -35,13 +34,23 @@ namespace ppbox
             peer_str += cdn_str;
             peer_str += add_str;
 
-            framework::string::Url peer_url;
-            peer_url.from_string(peer_str);
-            LOG_S(framework::logger::Logger::kLevelDebug,"[get_request] peer_work url:"<<peer_str
-                <<" from:"<<beg
-                <<" to:"<<end);
-
+            framework::string::Url peer_url(peer_str);
+            peer_url.svc(format(get_port()));
             addr_ = url.host_svc();
+
+            return peer_url;
+        }
+
+
+        boost::system::error_code LivePeerSource::open(
+            framework::string::Url const & url,
+            boost::uint64_t beg, 
+            boost::uint64_t end, 
+            boost::system::error_code & ec)
+        {
+            flag_ = true;
+
+            framework::string::Url peer_url = get_peer_url(url);
             util::protocol::HttpRequestHead & head = request_.head();
             head.path = peer_url.path_all();
             if (beg != 0 || end != (boost::uint64_t)-1) {
@@ -49,14 +58,8 @@ namespace ppbox
             } else {
                 head.range.reset();
             }
-            std::ostringstream oss;
-            head.get_content(oss);
-            LOG_STR(framework::logger::Logger::kLevelDebug2, oss.str().c_str());
-            http_.bind_host(addr_, ec);
-            http_.open(request_, ec);
-            http_.request().head().get_content(std::cout);
 
-            return ec;
+            return PeerSource::open(url, beg, end, ec);
         }
 
         void LivePeerSource::async_open(
@@ -66,24 +69,8 @@ namespace ppbox
             SourceBase::response_type const & resp)
         {
             flag_ = true;
-            std::string url_str = url.to_string();
-            std::string::size_type pos = url_str.find("block");
-            assert(pos != std::string::npos);
-            std::string cdn_str = url_str.substr(0, pos + 4);
-            cdn_str = framework::string::Url::encode(cdn_str);
-            std::string add_str = url_str.substr(pos + 5);
 
-            std::string peer_str("http://127.0.0.1:9000/playlive.flv?url=");
-            peer_str += cdn_str;
-            peer_str += add_str;
-
-            framework::string::Url peer_url;
-            peer_url.from_string(peer_str);
-            LOG_S(framework::logger::Logger::kLevelDebug,"[get_request] peer_work url:"<<peer_str
-                <<" from:"<<beg
-                <<" to:"<<end);
-
-            addr_ = url.host_svc();
+            framework::string::Url peer_url = get_peer_url(url);
             boost::system::error_code ec;
             util::protocol::HttpRequestHead & head = request_.head();
             head.path = peer_url.path_all();
@@ -93,11 +80,7 @@ namespace ppbox
                 head.range.reset();
             }
 
-            std::ostringstream oss;
-            head.get_content(oss);
-            LOG_STR(framework::logger::Logger::kLevelDebug2, oss.str().c_str());
-            http_.bind_host(addr_, ec);
-            http_.async_open(request_, resp);
+            PeerSource::async_open(url, beg, end, resp);
         }
 
     }//peer

@@ -30,6 +30,10 @@ namespace ppbox
                 boost::uint64_t beg, 
                 boost::uint64_t end, 
                 ppbox::common::SourceBase::response_type const & resp);
+
+        private:
+            framework::string::Url get_peer_url(
+                framework::string::Url const & url );
         };
 
     }//peer
