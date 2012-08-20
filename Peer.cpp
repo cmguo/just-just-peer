@@ -6,7 +6,7 @@
 #include "ppbox/peer/VodPeerSource.h"
 #include "ppbox/peer/LivePeerSource.h"
 
-#include <ppbox/common/SourceBase.h>
+#include <ppbox/data/SourceBase.h>
 
 #include <ppbox/peer_worker/Name.h>
 

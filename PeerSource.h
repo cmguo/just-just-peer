@@ -5,7 +5,7 @@
 
 #include "ppbox/peer/Peer.h"
 
-#include <ppbox/common/HttpSource.h>
+#include <ppbox/data/HttpSource.h>
 
 #include <framework/string/Url.h>
 
@@ -15,7 +15,7 @@ namespace ppbox
     {
 
         class PeerSource
-            : public  ppbox::common::HttpSource
+            : public  ppbox::data::HttpSource
         {
         public:
             PeerSource(

@@ -5,8 +5,6 @@
 
 #include "ppbox/peer/PeerSource.h"
 
-#include <ppbox/common/SourceBase.h>
-
 namespace ppbox
 {
     namespace peer
@@ -29,7 +27,7 @@ namespace ppbox
                 framework::string::Url const & url,
                 boost::uint64_t beg, 
                 boost::uint64_t end, 
-                ppbox::common::SourceBase::response_type const & resp);
+                ppbox::data::SourceBase::response_type const & resp);
 
         private:
             framework::string::Url get_peer_url(

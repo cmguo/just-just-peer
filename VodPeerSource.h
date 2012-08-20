@@ -5,9 +5,6 @@
 
 #include "ppbox/peer/PeerSource.h"
 
-#include <ppbox/common/HttpSource.h>
-
-
 namespace ppbox
 {
     namespace peer
