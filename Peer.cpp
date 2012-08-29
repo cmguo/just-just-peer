@@ -31,7 +31,7 @@ using namespace framework::process;
 #include <framework/system/ErrorCode.h>
 #include <framework/system/LogicError.h>
 #include <framework/string/Format.h>
-#include <framework/logger/LoggerStreamRecord.h>
+#include <framework/logger/StreamRecord.h>
 using namespace framework::system;
 using namespace framework::string;
 using namespace framework::logger;
@@ -106,7 +106,7 @@ namespace ppbox
         error_code Peer::startup()
         {
             error_code ec;
-            LOG_S(Logger::kLevelEvent, "[startup]");
+            LOG_INFO("[startup]");
 #ifndef PPBOX_DISABLE_DAC
             dac_.set_vod_version(version());
             dac_.set_vod_name(name());
@@ -115,7 +115,7 @@ namespace ppbox
             timer_->start();
 
             if (is_lock()) {
-                LOG_S(Logger::kLevelEvent, "[startup] try_lock");
+                LOG_INFO("[startup] try_lock");
 #ifdef __APPLE__
                 boost::filesystem::path cmd_file(MAC_PEER_WORKER);
 #else
@@ -126,9 +126,9 @@ namespace ppbox
                 process_->open(cmd_file, param, ec);
                 if (!ec) {
                     portMgr_.get_port(ppbox::common::vod,port_);
-                    LOG_S(Logger::kLevelEvent, "[startup] ok port:"<<port_);
+                    LOG_INFO("[startup] ok port:"<<port_);
                 } else {
-                    LOG_S(Logger::kLevelAlarm, "[startup] ec = " << ec.message());
+                    LOG_WARN("[startup] ec = " << ec.message());
                     port_ = 0;
                     if (ec == boost::system::errc::no_such_file_or_directory) {
                         ec.clear();
@@ -139,7 +139,7 @@ namespace ppbox
             }
 #else
 			portMgr_.get_port(ppbox::common::vod,port_);
-			LOG_S(Logger::kLevelEvent, "[startup] ok port:"<<port_);
+			LOG_INFO("[startup] ok port:"<<port_);
 #endif
             return ec;
         }
@@ -150,7 +150,7 @@ namespace ppbox
             error_code ec;
             if (is_lock()) {
                 if (process_ && !process_->is_alive(ec)) {
-                    LOG_S(Logger::kLevelError, "[check] worker is dead: " << ec.message());
+                    LOG_ERROR("[check] worker is dead: " << ec.message());
 
 #ifndef PPBOX_DISABLE_DAC
                     util::daemon::use_module<ppbox::dac::Dac>(get_daemon())
@@ -167,9 +167,9 @@ namespace ppbox
                     process_->open(cmd_file, param, ec);
                     if (!ec) {
                         portMgr_.get_port(ppbox::common::vod,port_);
-                        LOG_S(Logger::kLevelEvent, "[check] ok port:"<<port_);
+                        LOG_INFO("[check] ok port:"<<port_);
                     } else {
-                        LOG_S(Logger::kLevelAlarm, "[check] ec = " << ec.message());
+                        LOG_WARN("[check] ec = " << ec.message());
                         port_ = 0;
 
                         timer_->stop();
@@ -209,9 +209,9 @@ namespace ppbox
                 process_->signal(Signal::sig_int, ec);
                 process_->timed_join(1000, ec);
                 if (!ec) {
-                    LOG_S(Logger::kLevelEvent, "[shutdown] ok");
+                    LOG_INFO("[shutdown] ok");
                 } else {
-                    LOG_S(Logger::kLevelAlarm, "[shutdown] ec = " << ec.message());
+                    LOG_WARN("[shutdown] ec = " << ec.message());
                 }
                 process_->kill(ec);
                 process_->close(ec);

@@ -7,7 +7,7 @@
 #include <framework/string/Format.h>
 using namespace framework::string;
 
-#include <framework/logger/LoggerStreamRecord.h>
+#include <framework/logger/StreamRecord.h>
 
 namespace ppbox
 {

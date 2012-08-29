@@ -2,7 +2,7 @@
 #include "ppbox/peer/Common.h"
 #include "ppbox/peer/LivePeerSource.h"
 
-#include <framework/logger/LoggerStreamRecord.h>
+#include <framework/logger/StreamRecord.h>
 #include <framework/string/Format.h>
 
 using namespace framework::string;

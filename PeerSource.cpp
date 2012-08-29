@@ -9,7 +9,7 @@
 #include <util/daemon/detail/Module.h>
 
 #include <framework/string/Url.h>
-#include <framework/logger/LoggerStreamRecord.h>
+#include <framework/logger/StreamRecord.h>
 
 #include <boost/asio/read.hpp>
 #include <boost/asio/buffer.hpp>
@@ -44,12 +44,12 @@ namespace ppbox
             boost::uint64_t end, 
             boost::system::error_code & ec)
         {
-            LOG_S(framework::logger::Logger::kLevelDebug,"[get_request] peer_work url:"<<url.to_string()
+            LOG_DEBUG("[get_request] peer_work url:"<<url.to_string()
                 <<" from:"<<beg
                 <<" to:"<<end);
 
             std::ostringstream oss;
-            LOG_STR(framework::logger::Logger::kLevelDebug2, oss.str().c_str());
+            LOG_STR(Trace, oss.str().c_str());
             http_.request().head().get_content(std::cout);
 
             http_.bind_host(addr_, ec);
@@ -63,12 +63,12 @@ namespace ppbox
             boost::uint64_t end, 
             response_type const & resp)
         {
-            LOG_S(framework::logger::Logger::kLevelDebug,"[get_request] peer_work url:"<<url.to_string()
+            LOG_DEBUG("[get_request] peer_work url:"<<url.to_string()
                 <<" from:"<<beg
                 <<" to:"<<end);
 
             std::ostringstream oss;
-            LOG_STR(framework::logger::Logger::kLevelDebug2, oss.str().c_str());
+            LOG_STR(Trace, oss.str().c_str());
             http_.request().head().get_content(std::cout);
 
             boost::system::error_code ec;
