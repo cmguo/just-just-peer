@@ -48,10 +48,6 @@ namespace ppbox
                 <<" from:"<<beg
                 <<" to:"<<end);
 
-            std::ostringstream oss;
-            LOG_STR(Trace, oss.str().c_str());
-            http_.request().head().get_content(std::cout);
-
             http_.bind_host(addr_, ec);
             http_.open(request_, ec);
             return ec;
@@ -66,10 +62,6 @@ namespace ppbox
             LOG_DEBUG("[get_request] peer_work url:"<<url.to_string()
                 <<" from:"<<beg
                 <<" to:"<<end);
-
-            std::ostringstream oss;
-            LOG_STR(Trace, oss.str().c_str());
-            http_.request().head().get_content(std::cout);
 
             boost::system::error_code ec;
             http_.bind_host(addr_, ec);
