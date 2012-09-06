@@ -3,7 +3,7 @@
 #ifndef PPBOX_PEER_PEER_SOURCE_H_
 #define PPBOX_PEER_PEER_SOURCE_H_
 
-#include "ppbox/peer/Peer.h"
+#include "ppbox/peer/PeerModule.h"
 
 #include <ppbox/data/HttpSource.h>
 
@@ -11,6 +11,11 @@
 
 namespace ppbox
 {
+    namespace cdn
+    {
+        class PptvMedia;
+    }
+
     namespace peer
     {
 
@@ -19,7 +24,8 @@ namespace ppbox
         {
         public:
             PeerSource(
-                boost::asio::io_service & ios_svc);
+                boost::asio::io_service & io_svc);
+
             ~PeerSource();
 
             void set_demux_statu(){};
@@ -38,11 +44,13 @@ namespace ppbox
                 response_type const & resp);
 
         protected:
-            boost::uint16_t get_port() const;
+            virtual boost::system::error_code make_url(
+                framework::string::Url const & cdn_url, 
+                framework::string::Url & url);
 
-        private:
-            ppbox::peer::Peer & Peer_;
-
+        protected:
+            PeerModule & module_;
+            ppbox::cdn::PptvMedia const * media_;
         };
     }//peer
 }//ppbox

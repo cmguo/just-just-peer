@@ -14,24 +14,17 @@ namespace ppbox
         {
         public:
             LivePeerSource(
-                boost::asio::io_service & ios_svc);
+                boost::asio::io_service & io_svc);
+
             ~LivePeerSource();
 
-            boost::system::error_code open(
-                framework::string::Url const & url,
-                boost::uint64_t beg, 
-                boost::uint64_t end, 
-                boost::system::error_code & ec);
-
-            void async_open(
-                framework::string::Url const & url,
-                boost::uint64_t beg, 
-                boost::uint64_t end, 
-                ppbox::data::SourceBase::response_type const & resp);
+        private:
+            virtual boost::system::error_code make_url(
+                framework::string::Url const & cdn_url, 
+                framework::string::Url & url);
 
         private:
-            framework::string::Url get_peer_url(
-                framework::string::Url const & url );
+            size_t seq_;
         };
 
     }//peer

@@ -1,86 +1,56 @@
-//LivePeerSource.cpp
+// LivePeerSource.cpp
+
 #include "ppbox/peer/Common.h"
 #include "ppbox/peer/LivePeerSource.h"
 
+#include <ppbox/cdn/PptvLive.h>
+
 #include <framework/logger/StreamRecord.h>
 #include <framework/string/Format.h>
-
+#include <framework/string/Slice.h>
 using namespace framework::string;
 
 namespace ppbox
 {
     namespace peer
     {
+
         FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("LivePeerSource", 0);
 
-
         LivePeerSource::LivePeerSource(
-            boost::asio::io_service & ios_svc)
-            : PeerSource(ios_svc)
+            boost::asio::io_service & io_svc)
+            : PeerSource(io_svc)
+            , seq_(0)
         {
         }
 
-        framework::string::Url LivePeerSource::get_peer_url(
-            framework::string::Url const & url )
+        boost::system::error_code LivePeerSource::make_url(
+            framework::string::Url const & cdn_url, 
+            framework::string::Url & url)
         {
-            std::string url_str = url.to_string();
-            std::string::size_type pos = url_str.find("block");
-            assert(pos != std::string::npos);
-            std::string cdn_str = url_str.substr(0, pos + 4);
-            cdn_str = framework::string::Url::encode(cdn_str);
-            std::string add_str = url_str.substr(pos + 5);
+            ppbox::cdn::PptvLive * live = (ppbox::cdn::PptvLive *)media_;
 
-            std::string peer_str("http://127.0.0.1:9000/playlive.flv?url=");
-            peer_str += cdn_str;
-            peer_str += add_str;
+            boost::system::error_code ec = PeerSource::make_url(cdn_url, url);
 
-            framework::string::Url peer_url(peer_str);
-            peer_url.svc(format(get_port()));
-            addr_ = url.host_svc();
+            // "/live/<stream_id>/<file_time>"
+            std::vector<std::string> vec;
+            std::vector<std::string> vec1;
+            slice<std::string>(cdn_url.path(), std::back_inserter(vec), "/");
+            slice<std::string>(vec[2], std::back_inserter(vec1), ".");
 
-            return peer_url;
-        }
-
-
-        boost::system::error_code LivePeerSource::open(
-            framework::string::Url const & url,
-            boost::uint64_t beg, 
-            boost::uint64_t end, 
-            boost::system::error_code & ec)
-        {
-            flag_ = true;
-
-            framework::string::Url peer_url = get_peer_url(url);
-            util::protocol::HttpRequestHead & head = request_.head();
-            head.path = peer_url.path_all();
-            if (beg != 0 || end != (boost::uint64_t)-1) {
-                head.range.reset(util::protocol::http_field::Range((boost::int64_t)beg, (boost::int64_t)end));
-            } else {
-                head.range.reset();
+            if (!ec) {
+                url.path("/playlive.flv");
+                url.param("channelid", live->video().rid);
+                url.param("rid", live->video().rid);
+                url.param("datarate", format(live->video().bitrate));
+                url.param("replay", "1");
+                url.param("start", vec1[0]);
+                url.param("interval", format(live->segment().interval));
+                url.param("source", "0");
+                url.param("uniqueid", format(++seq_));
             }
 
-            return PeerSource::open(url, beg, end, ec);
-        }
-
-        void LivePeerSource::async_open(
-            framework::string::Url const & url,
-            boost::uint64_t beg, 
-            boost::uint64_t end, 
-            SourceBase::response_type const & resp)
-        {
-            flag_ = true;
-
-            framework::string::Url peer_url = get_peer_url(url);
-            boost::system::error_code ec;
-            util::protocol::HttpRequestHead & head = request_.head();
-            head.path = peer_url.path_all();
-            if (beg != 0 || end != (boost::uint64_t)-1) {
-                head.range.reset(util::protocol::http_field::Range((boost::int64_t)beg, (boost::int64_t)end));
-            } else {
-                head.range.reset();
-            }
-
-            PeerSource::async_open(url, beg, end, resp);
+            return ec;
         }
 
     }//peer

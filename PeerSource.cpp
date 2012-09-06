@@ -3,17 +3,12 @@
 #include "ppbox/peer/Common.h"
 #include "ppbox/peer/PeerSource.h"
 
-#include <ppbox/ppbox/Common.h>
+#include <ppbox/cdn/PptvMedia.h>
 
-#include <util/protocol/http/HttpError.h>
-#include <util/daemon/detail/Module.h>
-
-#include <framework/string/Url.h>
+#include <framework/logger/Logger.h>
 #include <framework/logger/StreamRecord.h>
-
-#include <boost/asio/read.hpp>
-#include <boost/asio/buffer.hpp>
-
+#include <framework/string/Format.h>
+using namespace framework::string;
 using namespace framework::logger;
 
 namespace ppbox
@@ -23,19 +18,15 @@ namespace ppbox
         FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("PeerSource", 0);
 
         PeerSource::PeerSource(
-            boost::asio::io_service & ios_svc)
-            : HttpSource(ios_svc)
-            , Peer_(util::daemon::use_module<ppbox::peer::Peer>(ppbox::global_daemon()))
+            boost::asio::io_service & io_svc)
+            : HttpSource(io_svc)
+            , module_(util::daemon::use_module<ppbox::peer::PeerModule>(io_svc))
+            // , media_((PptvMedia const *)util::daemon::use_module<ppbox::data::DataModule>(io_svc).get_media_from_source(this))
         {
         }
 
         PeerSource::~PeerSource()
         {
-        }
-
-        boost::uint16_t PeerSource::get_port() const
-        {
-            return Peer_.port();
         }
 
         boost::system::error_code PeerSource::open(
@@ -44,13 +35,12 @@ namespace ppbox
             boost::uint64_t end, 
             boost::system::error_code & ec)
         {
-            LOG_DEBUG("[get_request] peer_work url:"<<url.to_string()
-                <<" from:"<<beg
-                <<" to:"<<end);
+            LOG_DEBUG("[open] url:"<<url.to_string()
+                <<" range: "<< beg << " - " << end);
 
-            http_.bind_host(addr_, ec);
-            http_.open(request_, ec);
-            return ec;
+            framework::string::Url peer_url;
+            make_url(url, peer_url);
+            return HttpSource::open(peer_url, beg, end, ec);
         }
 
         void PeerSource::async_open(
@@ -59,13 +49,25 @@ namespace ppbox
             boost::uint64_t end, 
             response_type const & resp)
         {
-            LOG_DEBUG("[get_request] peer_work url:"<<url.to_string()
-                <<" from:"<<beg
-                <<" to:"<<end);
+            LOG_DEBUG("[async_open] url:"<<url.to_string()
+                <<" range: "<< beg << " - " << end);
 
-            boost::system::error_code ec;
-            http_.bind_host(addr_, ec);
-            http_.async_open(request_, resp);
+            framework::string::Url peer_url;
+            make_url(url, peer_url);
+            HttpSource::async_open(peer_url, beg, end, resp);
+        }
+
+        boost::system::error_code PeerSource::make_url(
+            framework::string::Url const & cdn_url,
+            framework::string::Url & url)
+        {
+            url.protocol("http");
+            url.host("127.0.0.1");
+            url.svc(format(module_.port()));
+            url.param("url", cdn_url.to_string());
+            url.param("BWType", format(media_->jump().bw_type));
+            url.param("autoclose", "false");
+            return boost::system::error_code();
         }
 
     }//peer

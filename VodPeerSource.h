@@ -14,27 +14,14 @@ namespace ppbox
         {
         public:
             VodPeerSource(
-                boost::asio::io_service & ios_svc);
+                boost::asio::io_service & io_svc);
 
             ~VodPeerSource();
 
-            boost::system::error_code open(
-                framework::string::Url const & url,
-                boost::uint64_t beg, 
-                boost::uint64_t end, 
-                boost::system::error_code & ec);
-
-            void async_open(
-                framework::string::Url const & url,
-                boost::uint64_t beg, 
-                boost::uint64_t end, 
-                SourceBase::response_type const & resp);
-
-            void set_demux_statu();
-
         private:
-            framework::string::Url get_peer_url(
-                framework::string::Url const & url);
+            virtual boost::system::error_code make_url(
+                framework::string::Url const & cdn_url, 
+                framework::string::Url & url);
         };
 
     }//peer
