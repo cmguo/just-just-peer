@@ -16,6 +16,11 @@ namespace ppbox
         class PptvMedia;
     }
 
+    namespace peer_worker
+    {
+        class ClientStatus;
+    }
+
     namespace peer
     {
 
@@ -44,6 +49,9 @@ namespace ppbox
                 response_type const & resp);
 
         protected:
+            virtual void parse_param(
+                std::string const & params);
+
             virtual boost::system::error_code make_url(
                 framework::string::Url const & cdn_url, 
                 framework::string::Url & url);
@@ -51,6 +59,7 @@ namespace ppbox
         protected:
             PeerModule & module_;
             ppbox::cdn::PptvMedia const * media_;
+            ppbox::peer_worker::ClientStatus * status_;
         };
     }//peer
 }//ppbox

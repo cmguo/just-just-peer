@@ -21,12 +21,10 @@ using namespace ppbox::peer_worker;
 #else
 #include <framework/process/Process.h>
 #include <framework/timer/Timer.h>
+#include <framework/memory/MemoryReference.h>
 using namespace framework::timer;
 using namespace framework::process;
 #endif
-
-#include <util/buffers/BufferCopy.h>
-
 #include <framework/system/ErrorCode.h>
 #include <framework/system/LogicError.h>
 #include <framework/string/Format.h>
@@ -74,11 +72,21 @@ namespace ppbox
             , mutex_(9000)
             , is_locked_(false)
         {
-
             process_ = new Process;
             timer_ = new Timer(timer_queue(), 
                 10, // 5 seconds
                 boost::bind(&PeerModule::check, this));
+
+            ppbox::peer_worker::ClientStatus::set_pool(framework::memory::BigFixedPool(
+                framework::memory::MemoryReference<framework::memory::SharedMemory>(shared_memory())));
+
+            stats_ = (framework::container::List<ppbox::peer_worker::ClientStatus> *)shared_memory()
+                .alloc_with_id(SHARED_OBJECT_ID_DEMUX, sizeof(framework::container::List<ppbox::peer_worker::ClientStatus>));
+            if (!stats_)
+                stats_ = (framework::container::List<ppbox::peer_worker::ClientStatus> *)shared_memory()
+                .get_by_id(SHARED_OBJECT_ID_DEMUX);
+            new (stats_) framework::container::List<ppbox::peer_worker::ClientStatus>;
+
         }
 #endif
 
@@ -143,6 +151,31 @@ namespace ppbox
             return ec;
         }
 
+        void PeerModule::shutdown()
+        {
+#ifndef PPBOX_CONTAIN_PEER_WORKER
+            if (process_) {
+                error_code ec;
+                process_->signal(Signal::sig_int, ec);
+                process_->timed_join(1000, ec);
+                if (!ec) {
+                    LOG_INFO("[shutdown] ok");
+                } else {
+                    LOG_WARN("[shutdown] ec = " << ec.message());
+                }
+                process_->kill(ec);
+                process_->close(ec);
+            }
+            if (timer_) {
+                timer_->stop();
+            }
+            if (is_locked_) {
+                mutex_.unlock();
+                is_locked_ = false;
+            }    
+#endif            
+        }
+
         void PeerModule::check()
         {
 #ifndef PPBOX_CONTAIN_PEER_WORKER
@@ -200,29 +233,20 @@ namespace ppbox
 #endif
         }
 
-        void PeerModule::shutdown()
+        ppbox::peer_worker::ClientStatus * PeerModule::alloc_status()
         {
-#ifndef PPBOX_CONTAIN_PEER_WORKER
-            if (process_) {
-                error_code ec;
-                process_->signal(Signal::sig_int, ec);
-                process_->timed_join(1000, ec);
-                if (!ec) {
-                    LOG_INFO("[shutdown] ok");
-                } else {
-                    LOG_WARN("[shutdown] ec = " << ec.message());
-                }
-                process_->kill(ec);
-                process_->close(ec);
-            }
-            if (timer_) {
-                timer_->stop();
-            }
-            if (is_locked_) {
-                mutex_.unlock();
-                is_locked_ = false;
-            }    
-#endif            
+            return new ppbox::peer_worker::ClientStatus;
+        }
+
+        void PeerModule::free_status(
+            ppbox::peer_worker::ClientStatus * status)
+        {
+            delete status;
+        }
+
+        void PeerModule::update_status(
+            ppbox::peer_worker::ClientStatus * status)
+        {
         }
 
         std::string PeerModule::version()
