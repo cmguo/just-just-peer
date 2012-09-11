@@ -51,7 +51,7 @@ namespace ppbox
             util::daemon::Daemon & daemon)
             : ppbox::common::CommonModuleBase<PeerModule>(daemon, "PeerModule")
 #ifndef PPBOX_DISABLE_DAC
-            , dac_(util::daemon::use_module<ppbox::dac::Dac>(daemon))
+            , dac_(util::daemon::use_module<ppbox::dac::DacModule>(daemon))
 #endif
             , portMgr_(util::daemon::use_module<ppbox::common::PortManager>(daemon))
             , port_(9000)
@@ -65,7 +65,7 @@ namespace ppbox
             util::daemon::Daemon & daemon)
             : ppbox::common::CommonModuleBase<PeerModule>(daemon, "PeerModule")
 #ifndef PPBOX_DISABLE_DAC
-            , dac_(util::daemon::use_module<ppbox::dac::Dac>(daemon))
+            , dac_(util::daemon::use_module<ppbox::dac::DacModule>(daemon))
 #endif
             , portMgr_(util::daemon::use_module<ppbox::common::PortManager>(daemon))
             , port_(9000)
@@ -185,7 +185,7 @@ namespace ppbox
                     LOG_ERROR("[check] worker is dead: " << ec.message());
 
 #ifndef PPBOX_DISABLE_DAC
-                    util::daemon::use_module<ppbox::dac::Dac>(get_daemon())
+                    util::daemon::use_module<ppbox::dac::DacModule>(get_daemon())
                         .run_info(ppbox::dac::CoreType::vod);
 #endif
                     process_->close(ec);
