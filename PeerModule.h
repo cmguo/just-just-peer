@@ -7,7 +7,7 @@
 #include <ppbox/peer_worker/ClientStatus.h>
 
 #ifndef PPBOX_DISABLE_DAC
-#include <ppbox/dac/Dac.h>
+#include <ppbox/dac/DacModule.h>
 #endif
 
 #ifndef PPBOX_CONTAIN_PEER_WORKER

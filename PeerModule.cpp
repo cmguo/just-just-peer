@@ -11,7 +11,9 @@
 #include <ppbox/peer_worker/Name.h>
 
 #ifndef PPBOX_DISABLE_DAC
-#include <ppbox/dac/Dac.h>
+#include <ppbox/dac/DacModule.h>
+#include <ppbox/dac/DacInfoWorker.h>
+using namespace ppbox::dac;
 #endif
 
 #ifdef PPBOX_CONTAIN_PEER_WORKER
@@ -186,7 +188,7 @@ namespace ppbox
 
 #ifndef PPBOX_DISABLE_DAC
                     util::daemon::use_module<ppbox::dac::DacModule>(get_daemon())
-                        .run_info(ppbox::dac::CoreType::vod);
+                        .submit(DacRestartInfo(CoreType::vod));
 #endif
                     process_->close(ec);
 #ifdef __APPLE__
