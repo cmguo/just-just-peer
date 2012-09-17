@@ -24,6 +24,10 @@ namespace ppbox
         {
         }
 
+        LivePeerSource::~LivePeerSource()
+        {
+        }
+
         boost::system::error_code LivePeerSource::make_url(
             framework::string::Url const & cdn_url, 
             framework::string::Url & url)

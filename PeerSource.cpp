@@ -68,6 +68,12 @@ namespace ppbox
             }
         }
 
+        ppbox::cdn::HttpStatistics const & PeerSource::http_stat() const
+        {
+            const_cast<PeerSource *>(this)->open_log(true);
+            return http_stat_;
+        }
+
         void PeerSource::parse_param(
             std::string const & params)
         {
@@ -90,7 +96,24 @@ namespace ppbox
 
             status_->set_current_url(url.to_string());
 
+            open_log(false);
+
             return boost::system::error_code();
+        }
+
+        void PeerSource::open_log(
+            bool end)
+        {
+            if (http_stat_.try_times > 0) {
+                http_stat_.end_try(http_.stat());
+                if (http_stat_.try_times == 1)
+                    http_stat_.response_data_time = http_stat_.total_elapse;
+            }
+            if (!end) {
+                http_stat_.begin_try();
+            } else {
+                http_stat_.total_elapse = http_stat_.elapse();
+            }
         }
 
     } // namespace peer

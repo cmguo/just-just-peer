@@ -61,6 +61,9 @@ namespace ppbox
                 framework::string::Url const & cdn_url, 
                 framework::string::Url & url);
 
+            void open_log(
+                bool end);
+
         protected:
             PeerModule & module_;
             ppbox::cdn::PptvMedia const * media_;
