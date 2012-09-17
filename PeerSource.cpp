@@ -93,6 +93,5 @@ namespace ppbox
             return boost::system::error_code();
         }
 
-    }//peer
-}//ppbox
-
+    } // namespace peer
+} // namespace ppbox

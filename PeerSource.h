@@ -5,6 +5,8 @@
 
 #include "ppbox/peer/PeerModule.h"
 
+#include <ppbox/cdn/HttpStatistics.h>
+
 #include <ppbox/data/HttpSource.h>
 
 #include <framework/string/Url.h>
@@ -48,6 +50,9 @@ namespace ppbox
                 boost::uint64_t end, 
                 response_type const & resp);
 
+        public:
+            ppbox::cdn::HttpStatistics const & http_stat() const;
+
         protected:
             virtual void parse_param(
                 std::string const & params);
@@ -60,6 +65,7 @@ namespace ppbox
             PeerModule & module_;
             ppbox::cdn::PptvMedia const * media_;
             ppbox::peer_worker::ClientStatus * status_;
+            ppbox::cdn::HttpStatistics http_stat_;
         };
     }//peer
 }//ppbox
