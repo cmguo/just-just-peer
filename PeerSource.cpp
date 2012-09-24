@@ -5,6 +5,11 @@
 
 #include <ppbox/cdn/PptvMedia.h>
 
+#include <ppbox/demux/DemuxModule.h>
+#include <ppbox/demux/base/DemuxEvent.h>
+#include <ppbox/demux/base/BufferDemuxer.h>
+#include <ppbox/data/DataModule.h>
+
 #include <framework/logger/Logger.h>
 #include <framework/logger/StreamRecord.h>
 #include <framework/string/Format.h>
@@ -21,15 +26,14 @@ namespace ppbox
             boost::asio::io_service & io_svc)
             : HttpSource(io_svc)
             , module_(util::daemon::use_module<ppbox::peer::PeerModule>(io_svc))
-            // , media_((PptvMedia const *)util::daemon::use_module<ppbox::data::DataModule>(io_svc).get_media_from_source(this))
-            , status_(module_.alloc_status())
+            , status_(NULL)
         {
-            parse_param(media_->p2p_params());
         }
 
         PeerSource::~PeerSource()
         {
-            module_.free_status(status_);
+            if (status_)
+                module_.free_status(status_);
         }
 
         boost::system::error_code PeerSource::open(
@@ -74,6 +78,14 @@ namespace ppbox
             return http_stat_;
         }
 
+        void PeerSource::on_event(
+            util::event::Event const & e)
+        {
+            ppbox::demux::BufferingEvent const & event = *e.cast<ppbox::demux::BufferingEvent>();
+            status_->update_buffer_time(event.stat.buf_time());
+            module_.update_status(status_);
+        }
+
         void PeerSource::parse_param(
             std::string const & params)
         {
@@ -94,9 +106,19 @@ namespace ppbox
             url.param("BWType", format(media_->jump().bw_type));
             url.param("autoclose", "false");
 
-            status_->set_current_url(url.to_string());
-
             open_log(false);
+
+            if (status_ == NULL) {
+                status_ = module_.alloc_status();
+                //if (media()) {
+                //    parse_param(((PptvMedia *)media())->p2p_params());
+                //}
+                // if (demuxer_) {
+                //    demuxer_->on<ppbox::demux::BufferingEvent>(boost::bind(&PeerSource::on_event, this, _1));
+                // }
+            }
+
+            status_->set_current_url(url.to_string());
 
             return boost::system::error_code();
         }

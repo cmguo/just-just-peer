@@ -9,10 +9,17 @@
 
 #include <ppbox/data/HttpSource.h>
 
+#include <util/event/Event.h>
+
 #include <framework/string/Url.h>
 
 namespace ppbox
 {
+    namespace demux
+    {
+        class BufferDemuxer;
+    }
+
     namespace cdn
     {
         class PptvMedia;
@@ -53,6 +60,10 @@ namespace ppbox
         public:
             ppbox::cdn::HttpStatistics const & http_stat() const;
 
+        private:
+            void on_event(
+                util::event::Event const & e);
+
         protected:
             virtual void parse_param(
                 std::string const & params);
@@ -66,7 +77,6 @@ namespace ppbox
 
         protected:
             PeerModule & module_;
-            ppbox::cdn::PptvMedia const * media_;
             ppbox::peer_worker::ClientStatus * status_;
             ppbox::cdn::HttpStatistics http_stat_;
         };
