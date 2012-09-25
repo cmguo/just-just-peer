@@ -65,6 +65,11 @@ namespace ppbox
                 util::event::Event const & e);
 
         protected:
+            ppbox::cdn::PptvMedia const * pptv_media()
+            {
+                return (ppbox::cdn::PptvMedia const *)(media());
+            }
+
             virtual void parse_param(
                 std::string const & params);
 

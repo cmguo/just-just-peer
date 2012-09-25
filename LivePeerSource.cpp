@@ -32,7 +32,7 @@ namespace ppbox
             framework::string::Url const & cdn_url, 
             framework::string::Url & url)
         {
-            ppbox::cdn::PptvLive * live = (ppbox::cdn::PptvLive *)media_;
+            ppbox::cdn::PptvLive * live = (ppbox::cdn::PptvLive *)pptv_media();
 
             boost::system::error_code ec = PeerSource::make_url(cdn_url, url);
 

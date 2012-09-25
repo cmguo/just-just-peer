@@ -103,16 +103,16 @@ namespace ppbox
             url.host("127.0.0.1");
             url.svc(format(module_.port()));
             url.param("url", cdn_url.to_string());
-            url.param("BWType", format(media_->jump().bw_type));
+            url.param("BWType", format(pptv_media()->jump().bw_type));
             url.param("autoclose", "false");
 
             open_log(false);
 
             if (status_ == NULL) {
                 status_ = module_.alloc_status();
-                //if (media()) {
-                //    parse_param(((PptvMedia *)media())->p2p_params());
-                //}
+                if (pptv_media()) {
+                    parse_param(pptv_media()->p2p_params());
+                }
                 // if (demuxer_) {
                 //    demuxer_->on<ppbox::demux::BufferingEvent>(boost::bind(&PeerSource::on_event, this, _1));
                 // }

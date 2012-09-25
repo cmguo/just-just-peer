@@ -31,7 +31,7 @@ namespace ppbox
             framework::string::Url const & cdn_url, 
             framework::string::Url & url)
         {
-            ppbox::cdn::PptvVod * vod = (ppbox::cdn::PptvVod *)media_;
+            ppbox::cdn::PptvVod * vod = (ppbox::cdn::PptvVod *)pptv_media();
             
             char const * str_no = cdn_url.path().c_str() + 1;
             size_t no = 0;
