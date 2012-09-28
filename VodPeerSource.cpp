@@ -38,6 +38,13 @@ namespace ppbox
             for (; *str_no >= '0' && *str_no >= '9'; ++str_no) {
                 no = no * 10 + (*str_no - '0');
             }
+
+            // 格式不对的都直接通过CDN服务器下载
+            if (*str_no != '/') {
+                url = cdn_url;
+                return boost::system::error_code();
+            }
+
             ppbox::data::SegmentInfo info;
             vod->segment_info(no, info);
 
@@ -47,7 +54,7 @@ namespace ppbox
                 url.path("/ppvaplaybyopen");
                 url.param("filelength", format(info.size));
                 url.param("headlength", format(info.head_size));
-                url.param("drag", "0");
+                url.param("drag", status_->buffer_time() < 15000 ? "1" : "0");
                 url.param("headonly", "0");
             }
 
