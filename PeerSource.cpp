@@ -1,4 +1,4 @@
-//PeerSource.cpp
+// PeerSource.cpp
 
 #include "ppbox/peer/Common.h"
 #include "ppbox/peer/PeerSource.h"
@@ -7,7 +7,7 @@
 
 #include <ppbox/demux/DemuxModule.h>
 #include <ppbox/demux/base/DemuxEvent.h>
-#include <ppbox/demux/base/BufferDemuxer.h>
+#include <ppbox/demux/base/SegmentDemuxer.h>
 #include <ppbox/data/DataModule.h>
 
 #include <framework/logger/Logger.h>
@@ -82,7 +82,7 @@ namespace ppbox
             util::event::Event const & e)
         {
             ppbox::demux::BufferingEvent const & event = *e.cast<ppbox::demux::BufferingEvent>();
-            status_->update_buffer_time(event.stat.buf_time());
+            status_->update_buffer_time((boost::uint32_t)event.stat.buf_time());
             module_.update_status(status_);
         }
 

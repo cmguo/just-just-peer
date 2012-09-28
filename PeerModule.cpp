@@ -188,7 +188,7 @@ namespace ppbox
 
 #ifndef PPBOX_DISABLE_DAC
                     util::daemon::use_module<ppbox::dac::DacModule>(get_daemon())
-                        .submit(DacRestartInfo(CoreType::vod));
+                        .submit(DacRestartInfo(DacRestartInfo::vod));
 #endif
                     process_->close(ec);
 #ifdef __APPLE__
@@ -273,5 +273,5 @@ namespace ppbox
         }
 #endif
 
-    } // namespace PeerModule
+    } // namespace peer
 } // namespace ppbox

@@ -57,5 +57,5 @@ namespace ppbox
             return ec;
         }
 
-    }//peer
-}//ppbox
+    } // namespace peer
+} // namespace ppbox

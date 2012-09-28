@@ -1,4 +1,4 @@
-//VodPeerSource.cpp
+// VodPeerSource.cpp
 
 #include "ppbox/peer/Common.h"
 #include "ppbox/peer/VodPeerSource.h"
@@ -54,5 +54,5 @@ namespace ppbox
             return ec;
         }
 
-    }//peer
-}//ppbox
+    } // namespace peer
+} // namespace ppbox

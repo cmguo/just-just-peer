@@ -1,4 +1,4 @@
-//PeerSource.h
+// PeerSource.h
 
 #ifndef PPBOX_PEER_PEER_SOURCE_H_
 #define PPBOX_PEER_PEER_SOURCE_H_
@@ -15,11 +15,6 @@
 
 namespace ppbox
 {
-    namespace demux
-    {
-        class BufferDemuxer;
-    }
-
     namespace cdn
     {
         class PptvMedia;
@@ -85,9 +80,8 @@ namespace ppbox
             ppbox::peer_worker::ClientStatus * status_;
             ppbox::cdn::HttpStatistics http_stat_;
         };
-    }//peer
-}//ppbox
 
-#endif
+    } // namespace peer
+} // namespace ppbox
 
-//PPBOX_PEER_PEER_SOURCE_H_
+#endif // PPBOX_PEER_PEER_SOURCE_H_
