@@ -32,7 +32,7 @@ namespace ppbox
             framework::string::Url const & cdn_url, 
             framework::string::Url & url)
         {
-            ppbox::cdn::PptvLive * live = (ppbox::cdn::PptvLive *)pptv_media();
+            ppbox::cdn::PptvLive const & live = (ppbox::cdn::PptvLive const &)pptv_media();
 
             boost::system::error_code ec = PeerSource::make_url(cdn_url, url);
 
@@ -44,12 +44,12 @@ namespace ppbox
 
             if (!ec) {
                 url.path("/playlive.flv");
-                url.param("channelid", live->video().rid);
-                url.param("rid", live->video().rid);
-                url.param("datarate", format(live->video().bitrate));
+                url.param("channelid", live.video().rid);
+                url.param("rid", live.video().rid);
+                url.param("datarate", format(live.video().bitrate));
                 url.param("replay", "1");
                 url.param("start", vec1[0]);
-                url.param("interval", format(live->segment().interval));
+                url.param("interval", format(live.segment().interval));
                 url.param("source", "0");
                 url.param("uniqueid", format(++seq_));
             }

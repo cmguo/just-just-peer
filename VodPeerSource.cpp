@@ -31,7 +31,7 @@ namespace ppbox
             framework::string::Url const & cdn_url, 
             framework::string::Url & url)
         {
-            ppbox::cdn::PptvVod * vod = (ppbox::cdn::PptvVod *)pptv_media();
+            ppbox::cdn::PptvVod const & vod = (ppbox::cdn::PptvVod const &)pptv_media();
             
             char const * str_no = cdn_url.path().c_str() + 1;
             size_t no = 0;
@@ -46,7 +46,7 @@ namespace ppbox
             }
 
             ppbox::data::SegmentInfo info;
-            vod->segment_info(no, info);
+            vod.segment_info(no, info);
 
             boost::system::error_code ec = PeerSource::make_url(cdn_url, url);
 

@@ -45,10 +45,6 @@ namespace ppbox
 
         FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("PeerModule", 0)
 
-        PPBOX_REGISTER_SOURCE(ppvod, VodPeerSource);
-        PPBOX_REGISTER_SOURCE(pplive2, LivePeerSource);
-
-#ifdef PPBOX_CONTAIN_PEER_WORKER
         PeerModule::PeerModule(
             util::daemon::Daemon & daemon)
             : ppbox::common::CommonModuleBase<PeerModule>(daemon, "PeerModule")
@@ -57,27 +53,20 @@ namespace ppbox
 #endif
             , portMgr_(util::daemon::use_module<ppbox::common::PortManager>(daemon))
             , port_(9000)
-        {
-
-            util::daemon::use_module<ppbox::peer_worker::WorkerModule>(daemon);
-            util::daemon::use_module<ppbox::peer_worker::StatusProxy>(daemon);
-        }
-#else
-        PeerModule::PeerModule(
-            util::daemon::Daemon & daemon)
-            : ppbox::common::CommonModuleBase<PeerModule>(daemon, "PeerModule")
-#ifndef PPBOX_DISABLE_DAC
-            , dac_(util::daemon::use_module<ppbox::dac::DacModule>(daemon))
-#endif
-            , portMgr_(util::daemon::use_module<ppbox::common::PortManager>(daemon))
-            , port_(9000)
+#ifndef PPBOX_CONTAIN_PEER_WORKER
             , mutex_(9000)
             , is_locked_(false)
+#endif
         {
+#ifdef PPBOX_CONTAIN_PEER_WORKER
+            util::daemon::use_module<ppbox::peer_worker::WorkerModule>(daemon);
+            util::daemon::use_module<ppbox::peer_worker::StatusProxy>(daemon);
+#else
             process_ = new Process;
             timer_ = new Timer(timer_queue(), 
-                10, // 5 seconds
+                    10, // 5 seconds
                 boost::bind(&PeerModule::check, this));
+#endif
 
             ppbox::peer_worker::ClientStatus::set_pool(framework::memory::BigFixedPool(
                 framework::memory::MemoryReference<framework::memory::SharedMemory>(shared_memory())));
@@ -88,9 +77,7 @@ namespace ppbox
                 stats_ = (framework::container::List<ppbox::peer_worker::ClientStatus> *)shared_memory()
                 .get_by_id(SHARED_OBJECT_ID_DEMUX);
             new (stats_) framework::container::List<ppbox::peer_worker::ClientStatus>;
-
         }
-#endif
 
         PeerModule::~PeerModule()
         {
