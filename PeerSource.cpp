@@ -78,6 +78,23 @@ namespace ppbox
             return http_stat_;
         }
 
+        void PeerSource::pptv_media(
+            ppbox::cdn::PptvMedia const & media)
+        {
+            pptv_media_ = &media;
+
+            status_ = module_.alloc_status();
+            parse_param(pptv_media().p2p_params());
+            switch (pptv_media().owner_type()) {
+                case ppbox::cdn::PptvMedia::ot_demuxer:
+                    pptv_media().demuxer().on<ppbox::demux::BufferingEvent>(boost::bind(&PeerSource::on_event, this, _1));
+                    break;
+                case ppbox::cdn::PptvMedia::ot_merger:
+                    // pptv_media().merger().on<ppbox::demux::BufferingEvent>(boost::bind(&PeerSource::on_event, this, _1));
+                    break;
+            }
+        }
+
         void PeerSource::on_event(
             util::event::Event const & e)
         {
@@ -107,14 +124,6 @@ namespace ppbox
             url.param("autoclose", "false");
 
             open_log(false);
-
-            if (status_ == NULL) {
-                status_ = module_.alloc_status();
-                parse_param(pptv_media().p2p_params());
-                // if (demuxer_) {
-                //    demuxer_->on<ppbox::demux::BufferingEvent>(boost::bind(&PeerSource::on_event, this, _1));
-                // }
-            }
 
             status_->set_current_url(url.to_string());
 

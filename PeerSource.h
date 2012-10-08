@@ -55,16 +55,19 @@ namespace ppbox
         public:
             ppbox::cdn::HttpStatistics const & http_stat() const;
 
+            void pptv_media(
+                ppbox::cdn::PptvMedia const & media);
+
+            ppbox::cdn::PptvMedia const & pptv_media()
+            {
+                return *pptv_media_;
+            }
+
         private:
             void on_event(
                 util::event::Event const & e);
 
         protected:
-            ppbox::cdn::PptvMedia const & pptv_media()
-            {
-                return (ppbox::cdn::PptvMedia const &)(media());
-            }
-
             virtual void parse_param(
                 std::string const & params);
 
@@ -77,6 +80,7 @@ namespace ppbox
 
         protected:
             PeerModule & module_;
+            ppbox::cdn::PptvMedia const * pptv_media_;
             ppbox::peer_worker::ClientStatus * status_;
             ppbox::cdn::HttpStatistics http_stat_;
         };
