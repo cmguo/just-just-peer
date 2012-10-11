@@ -20,7 +20,7 @@ namespace ppbox
 {
     namespace peer
     {
-        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("PeerSource", 0);
+        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("ppbox.peer.PeerSource", Debug);
 
         PeerSource::PeerSource(
             boost::asio::io_service & io_svc)
@@ -116,6 +116,8 @@ namespace ppbox
             framework::string::Url const & cdn_url,
             framework::string::Url & url)
         {
+            LOG_DEBUG("Use vod worker, BWType: " << pptv_media().jump().bw_type);
+
             url.protocol("http");
             url.host("127.0.0.1");
             url.svc(format(module_.port()));

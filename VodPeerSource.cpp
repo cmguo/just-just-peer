@@ -15,7 +15,7 @@ namespace ppbox
     namespace peer
     {
 
-        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("VodPeerSource", 0);
+        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("ppbox.peer.VodPeerSource", framework::logger::Debug);
 
         VodPeerSource::VodPeerSource(
             boost::asio::io_service & io_svc)

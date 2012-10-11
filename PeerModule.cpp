@@ -43,7 +43,7 @@ namespace ppbox
     namespace peer
     {
 
-        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("PeerModule", 0)
+        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("ppbox.peer.PeerModule", Debug)
 
         PeerModule::PeerModule(
             util::daemon::Daemon & daemon)

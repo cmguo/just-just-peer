@@ -7,7 +7,7 @@
 
 #include <ppbox/cdn/HttpStatistics.h>
 
-#include <ppbox/data/HttpSource.h>
+#include <ppbox/data/source/HttpSource.h>
 
 #include <util/event/Event.h>
 

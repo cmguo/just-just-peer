@@ -15,7 +15,7 @@ namespace ppbox
     namespace peer
     {
 
-        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("LivePeerSource", 0);
+        //FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("ppbox.peer.LivePeerSource", Debug);
 
         LivePeerSource::LivePeerSource(
             boost::asio::io_service & io_svc)
