@@ -98,7 +98,7 @@ namespace ppbox
         void PeerSource::on_event(
             util::event::Event const & e)
         {
-            ppbox::demux::BufferingEvent const & event = *e.cast<ppbox::demux::BufferingEvent>();
+            ppbox::demux::BufferingEvent const & event = *e.as<ppbox::demux::BufferingEvent>();
             status_->update_buffer_time((boost::uint32_t)event.stat.buf_time());
             module_.update_status(status_);
         }
