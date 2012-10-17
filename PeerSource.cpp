@@ -8,7 +8,7 @@
 #include <ppbox/demux/DemuxModule.h>
 #include <ppbox/demux/base/DemuxEvent.h>
 #include <ppbox/demux/base/SegmentDemuxer.h>
-#include <ppbox/data/DataModule.h>
+#include <ppbox/data/SegmentSource.h>
 
 #include <framework/logger/Logger.h>
 #include <framework/logger/StreamRecord.h>
@@ -27,6 +27,7 @@ namespace ppbox
             : HttpSource(io_svc)
             , module_(util::daemon::use_module<ppbox::peer::PeerModule>(io_svc))
             , status_(NULL)
+            , peer_fail_(false)
         {
         }
 
@@ -45,7 +46,7 @@ namespace ppbox
             LOG_DEBUG("[open] url:"<<url.to_string()
                 <<" range: "<< beg << " - " << end);
 
-            if (module_.port() > 0) {
+            if (use_peer()) {
                 framework::string::Url peer_url;
                 make_url(url, peer_url);
                 return HttpSource::open(peer_url, beg, end, ec);
@@ -63,7 +64,7 @@ namespace ppbox
             LOG_DEBUG("[async_open] url:"<<url.to_string()
                 <<" range: "<< beg << " - " << end);
 
-            if (module_.port() > 0) {
+            if (use_peer()) {
                 framework::string::Url peer_url;
                 make_url(url, peer_url);
                 HttpSource::async_open(peer_url, beg, end, resp);
@@ -88,9 +89,14 @@ namespace ppbox
             switch (pptv_media().owner_type()) {
                 case ppbox::cdn::PptvMedia::ot_demuxer:
                     pptv_media().demuxer().on<ppbox::demux::BufferingEvent>(boost::bind(&PeerSource::on_event, this, _1));
+                    seg_source_ = &pptv_media().demuxer().source();
                     break;
                 case ppbox::cdn::PptvMedia::ot_merger:
                     // pptv_media().merger().on<ppbox::demux::BufferingEvent>(boost::bind(&PeerSource::on_event, this, _1));
+                    //seg_source_ = &pptv_media().merger().source();
+                    break;
+                default:
+                    assert(0);
                     break;
             }
         }
@@ -145,6 +151,13 @@ namespace ppbox
             } else {
                 http_stat_.total_elapse = http_stat_.elapse();
             }
+        }
+
+        bool PeerSource::use_peer()
+        {
+            if (!peer_fail_ && seg_source_->num_try() >= 3)
+                peer_fail_ = true;
+            return module_.port() > 0 && !peer_fail_;
         }
 
     } // namespace peer

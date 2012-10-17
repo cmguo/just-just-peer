@@ -15,6 +15,11 @@
 
 namespace ppbox
 {
+    namespace data
+    {
+        class SegmentSource;
+    }
+
     namespace cdn
     {
         class PptvMedia;
@@ -35,18 +40,16 @@ namespace ppbox
             PeerSource(
                 boost::asio::io_service & io_svc);
 
-            ~PeerSource();
-
-            void set_demux_statu(){};
+            virtual ~PeerSource();
 
         public:
-            boost::system::error_code open(
+            virtual boost::system::error_code open(
                 framework::string::Url const & url,
                 boost::uint64_t beg, 
                 boost::uint64_t end, 
                 boost::system::error_code & ec);
 
-            void async_open(
+            virtual void async_open(
                 framework::string::Url const & url,
                 boost::uint64_t beg, 
                 boost::uint64_t end, 
@@ -78,11 +81,17 @@ namespace ppbox
             void open_log(
                 bool end);
 
+            bool use_peer();
+
         protected:
+            ppbox::peer_worker::ClientStatus * status_;
+
+        private:
             PeerModule & module_;
             ppbox::cdn::PptvMedia const * pptv_media_;
-            ppbox::peer_worker::ClientStatus * status_;
+            ppbox::data::SegmentSource const * seg_source_;
             ppbox::cdn::HttpStatistics http_stat_;
+            bool peer_fail_;            
         };
 
     } // namespace peer

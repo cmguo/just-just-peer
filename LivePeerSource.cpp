@@ -10,6 +10,8 @@
 #include <framework/string/Slice.h>
 using namespace framework::string;
 
+#include <boost/bind.hpp>
+
 namespace ppbox
 {
     namespace peer
@@ -26,6 +28,47 @@ namespace ppbox
 
         LivePeerSource::~LivePeerSource()
         {
+        }
+
+        boost::system::error_code LivePeerSource::open(
+            framework::string::Url const & url,
+            boost::uint64_t beg, 
+            boost::uint64_t end, 
+            boost::system::error_code & ec)
+        {
+            if (!use_peer()) {
+                beg += 1400;
+            } else if (beg > 0) {
+                // 不能断点续传
+                return framework::system::logic_error::not_supported;
+            }
+            return PeerSource::open(url, beg, end, ec);
+        }
+
+        void LivePeerSource::async_open(
+            framework::string::Url const & url,
+            boost::uint64_t beg, 
+            boost::uint64_t end, 
+            response_type const & resp)
+        {
+            if (!use_peer()) {
+                beg += 1400;
+            } else if (beg > 0) {
+                get_io_service().post(boost::bind(resp, framework::system::logic_error::not_supported));
+                return;
+            }
+            return PeerSource::async_open(url, beg, end, resp);
+        }
+
+        boost::uint64_t LivePeerSource::total(
+            boost::system::error_code & ec)
+        {
+            if (!use_peer()) {
+                return PeerSource::total(ec);
+            } else {
+                ec.clear();
+                return boost::uint64_t(0x8000000000000000UL); // 一个非常大的数值，假设永远下载不完
+            }
         }
 
         boost::system::error_code LivePeerSource::make_url(
