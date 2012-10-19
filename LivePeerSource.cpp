@@ -64,7 +64,7 @@ namespace ppbox
             boost::system::error_code & ec)
         {
             if (!use_peer()) {
-                return PeerSource::total(ec);
+                return PeerSource::total(ec) - 1400;
             } else {
                 ec.clear();
                 return boost::uint64_t(0x8000000000000000UL); // 一个非常大的数值，假设永远下载不完
