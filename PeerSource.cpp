@@ -5,9 +5,11 @@
 
 #include <ppbox/cdn/PptvMedia.h>
 
-#include <ppbox/demux/DemuxModule.h>
 #include <ppbox/demux/base/DemuxEvent.h>
 #include <ppbox/demux/base/SegmentDemuxer.h>
+
+#include <ppbox/merge/MergerBase.h>
+
 #include <ppbox/data/SegmentSource.h>
 
 #include <framework/logger/Logger.h>
@@ -92,8 +94,8 @@ namespace ppbox
                     seg_source_ = &pptv_media().demuxer().source();
                     break;
                 case ppbox::cdn::PptvMedia::ot_merger:
-                    // pptv_media().merger().on<ppbox::demux::BufferingEvent>(boost::bind(&PeerSource::on_event, this, _1));
-                    //seg_source_ = &pptv_media().merger().source();
+                     //pptv_media().merger().on<ppbox::demux::BufferingEvent>(boost::bind(&PeerSource::on_event, this, _1));
+                    seg_source_ = &pptv_media().merger().source();
                     break;
                 default:
                     assert(0);
