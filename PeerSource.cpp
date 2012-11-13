@@ -16,13 +16,13 @@
 #include <framework/logger/StreamRecord.h>
 #include <framework/string/Format.h>
 using namespace framework::string;
-using namespace framework::logger;
 
 namespace ppbox
 {
     namespace peer
     {
-        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("ppbox.peer.PeerSource", Debug);
+
+        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("ppbox.peer.PeerSource", framework::logger::Debug);
 
         PeerSource::PeerSource(
             boost::asio::io_service & io_svc)
