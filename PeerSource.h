@@ -84,10 +84,10 @@ namespace ppbox
             bool use_peer();
 
         protected:
+            PeerModule & module_;
             ppbox::peer_worker::ClientStatus * status_;
 
         private:
-            PeerModule & module_;
             ppbox::cdn::PptvMedia const * pptv_media_;
             ppbox::data::SegmentSource const * seg_source_;
             ppbox::cdn::HttpStatistics http_stat_;
