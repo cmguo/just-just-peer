@@ -43,8 +43,8 @@ namespace ppbox
             size_t seq_;
         };
 
-        PPBOX_REGISTER_SOURCE(pplive2, LivePeerSource);
-        PPBOX_REGISTER_SOURCE(pplive3, LivePeerSource);
+        PPBOX_REGISTER_SOURCE("pplive2", LivePeerSource);
+        PPBOX_REGISTER_SOURCE("pplive3", LivePeerSource);
 
     } // namespace peer
 } // namespace ppbox

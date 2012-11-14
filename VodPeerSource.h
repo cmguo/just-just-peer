@@ -24,8 +24,8 @@ namespace ppbox
                 framework::string::Url & url);
         };
 
-        PPBOX_REGISTER_SOURCE(ppvod, VodPeerSource);
-        PPBOX_REGISTER_SOURCE(ppvod2, VodPeerSource);
+        PPBOX_REGISTER_SOURCE("ppvod", VodPeerSource);
+        PPBOX_REGISTER_SOURCE("ppvod2", VodPeerSource);
 
     } // namespace peer
 } // namespace ppbox
