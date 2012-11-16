@@ -6,11 +6,11 @@
 #include <ppbox/cdn/PptvMedia.h>
 
 #include <ppbox/demux/base/DemuxEvent.h>
-#include <ppbox/demux/base/SegmentDemuxer.h>
+#include <ppbox/demux/segment/SegmentDemuxer.h>
 
 #include <ppbox/merge/MergerBase.h>
 
-#include <ppbox/data/SegmentSource.h>
+#include <ppbox/data/segment/SegmentSource.h>
 
 #include <framework/logger/Logger.h>
 #include <framework/logger/StreamRecord.h>
