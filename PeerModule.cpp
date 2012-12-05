@@ -24,10 +24,10 @@ using namespace ppbox::peer_worker;
 #else
 #include <framework/process/Process.h>
 #include <framework/timer/Timer.h>
-#include <framework/memory/MemoryReference.h>
 using namespace framework::timer;
 using namespace framework::process;
 #endif
+#include <framework/memory/MemoryReference.h>
 #include <framework/system/ErrorCode.h>
 #include <framework/system/LogicError.h>
 #include <framework/string/Format.h>
@@ -61,7 +61,7 @@ namespace ppbox
         {
 #ifdef PPBOX_CONTAIN_PEER_WORKER
             util::daemon::use_module<ppbox::peer_worker::WorkerModule>(daemon);
-            util::daemon::use_module<ppbox::peer_worker::StatusProxy>(daemon);
+            //util::daemon::use_module<ppbox::peer_worker::StatusProxy>(daemon);
 #else
             process_ = new Process;
             timer_ = new Timer(timer_queue(), 
