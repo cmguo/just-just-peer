@@ -133,6 +133,8 @@ namespace ppbox
             url.param("BWType", format(pptv_media().jump().bw_type));
             url.param("autoclose", "false");
 
+            url.encode();
+
             open_log(false);
 
             status_->set_current_url(url.to_string());

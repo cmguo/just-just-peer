@@ -35,7 +35,7 @@ namespace ppbox
             
             char const * str_no = cdn_url.path().c_str() + 1;
             size_t no = 0;
-            for (; *str_no >= '0' && *str_no >= '9'; ++str_no) {
+            for (; *str_no >= '0' && *str_no <= '9'; ++str_no) {
                 no = no * 10 + (*str_no - '0');
             }
 
