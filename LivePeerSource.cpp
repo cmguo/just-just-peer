@@ -77,13 +77,15 @@ namespace ppbox
         {
             ppbox::cdn::PptvLive const & live = (ppbox::cdn::PptvLive const &)pptv_media();
 
-            boost::system::error_code ec = PeerSource::make_url(cdn_url, url);
+            framework::string::Url cdn_url2 = cdn_url;
+            cdn_url2.path("/live/");
+            boost::system::error_code ec = PeerSource::make_url(cdn_url2, url);
 
             // "/live/<stream_id>/<file_time>"
             std::vector<std::string> vec;
             std::vector<std::string> vec1;
             slice<std::string>(cdn_url.path(), std::back_inserter(vec), "/");
-            slice<std::string>(vec[2], std::back_inserter(vec1), ".");
+            slice<std::string>(vec[3], std::back_inserter(vec1), ".");
 
             if (!ec) {
                 url.path("/playlive.flv");
