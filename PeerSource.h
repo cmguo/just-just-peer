@@ -55,6 +55,9 @@ namespace ppbox
                 boost::uint64_t end, 
                 response_type const & resp);
 
+            virtual boost::system::error_code close(
+                boost::system::error_code & ec);
+
         public:
             ppbox::cdn::HttpStatistics const & http_stat() const;
 

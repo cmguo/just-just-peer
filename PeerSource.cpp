@@ -75,6 +75,13 @@ namespace ppbox
             }
         }
 
+        boost::system::error_code PeerSource::close(
+            boost::system::error_code & ec)
+		{
+			open_log(true);
+			return HttpSource::close(ec);
+		}
+
         ppbox::cdn::HttpStatistics const & PeerSource::http_stat() const
         {
             const_cast<PeerSource *>(this)->open_log(true);
@@ -137,7 +144,7 @@ namespace ppbox
 
             open_log(false);
 
-            status_->set_current_url(url.to_string());
+            status_->set_current_url(cdn_url.to_string());
 
             return boost::system::error_code();
         }
@@ -145,15 +152,12 @@ namespace ppbox
         void PeerSource::open_log(
             bool end)
         {
-            if (http_stat_.try_times > 0) {
-                http_stat_.end_try(http_.stat());
-                if (http_stat_.try_times == 1)
-                    http_stat_.response_data_time = http_stat_.total_elapse;
-            }
             if (!end) {
                 http_stat_.begin_try();
             } else {
-                http_stat_.total_elapse = http_stat_.elapse();
+				http_stat_.end_try(http_.stat());
+				if (http_stat_.try_times == 1)
+					http_stat_.response_data_time = http_stat_.total_elapse;
             }
         }
 
