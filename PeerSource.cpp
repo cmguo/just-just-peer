@@ -77,10 +77,10 @@ namespace ppbox
 
         boost::system::error_code PeerSource::close(
             boost::system::error_code & ec)
-		{
-			open_log(true);
-			return HttpSource::close(ec);
-		}
+        {
+            open_log(true);
+            return HttpSource::close(ec);
+        }
 
         ppbox::cdn::HttpStatistics const & PeerSource::http_stat() const
         {
@@ -155,9 +155,9 @@ namespace ppbox
             if (!end) {
                 http_stat_.begin_try();
             } else {
-				http_stat_.end_try(http_.stat());
-				if (http_stat_.try_times == 1)
-					http_stat_.response_data_time = http_stat_.total_elapse;
+                http_stat_.end_try(http_.stat());
+                if (http_stat_.try_times == 1)
+                    http_stat_.response_data_time = http_stat_.total_elapse;
             }
         }
 

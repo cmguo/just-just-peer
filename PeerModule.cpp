@@ -134,8 +134,8 @@ namespace ppbox
                 }
             }
 #else
-			portMgr_.get_port(ppbox::common::vod,port_);
-			LOG_INFO("[startup] ok port:"<<port_);
+            portMgr_.get_port(ppbox::common::vod,port_);
+            LOG_INFO("[startup] ok port:"<<port_);
 #endif
             return ec;
         }
@@ -225,14 +225,14 @@ namespace ppbox
         ppbox::peer_worker::ClientStatus * PeerModule::alloc_status()
         {
             ppbox::peer_worker::ClientStatus * stat = new ppbox::peer_worker::ClientStatus;
-			stats_->insert(stat);
-			return stat;
+            stats_->insert(stat);
+            return stat;
         }
 
         void PeerModule::free_status(
             ppbox::peer_worker::ClientStatus * status)
         {
-			// auto detach from list
+            // auto detach from list
             delete status;
         }
 
