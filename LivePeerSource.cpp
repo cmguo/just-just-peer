@@ -40,7 +40,7 @@ namespace ppbox
                 beg += 1400;
             } else if (beg > 0) {
                 // 不能断点续传
-                return framework::system::logic_error::not_supported;
+                return ec = framework::system::logic_error::not_supported;
             }
             return PeerSource::open(url, beg, end, ec);
         }
@@ -98,6 +98,8 @@ namespace ppbox
                 url.param("source", "0");
                 url.param("uniqueid", format(++seq_));
             }
+
+            status_->set_current_url(url.to_string());
 
             return ec;
         }

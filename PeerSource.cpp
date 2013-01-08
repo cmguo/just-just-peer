@@ -163,7 +163,7 @@ namespace ppbox
 
         bool PeerSource::use_peer()
         {
-            if (!peer_fail_ && seg_source_->num_try() >= 3)
+            if (!peer_fail_ && seg_source_->num_try() > 3)
                 peer_fail_ = true;
             return module_.port() > 0 && !peer_fail_;
         }
