@@ -81,6 +81,9 @@ namespace ppbox
 
         PeerModule::~PeerModule()
         {
+            ppbox::peer_worker::ClientStatus::set_pool(framework::memory::BigFixedPool(
+                framework::memory::PrivateMemory()));
+
 #ifndef PPBOX_CONTAIN_PEER_WORKER
 
             if (is_lock()) {
