@@ -45,10 +45,11 @@ namespace ppbox
                 return boost::system::error_code();
             }
 
+            boost::system::error_code ec;
             ppbox::data::SegmentInfo info;
-            vod.segment_info(no, info);
+            vod.segment_info(no, info, ec);
 
-            boost::system::error_code ec = PeerSource::make_url(cdn_url, url);
+            ec = PeerSource::make_url(cdn_url, url);
 
             if (!ec) {
                 url.path("/ppvaplaybyopen");
