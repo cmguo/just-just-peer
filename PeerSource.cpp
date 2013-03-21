@@ -108,6 +108,9 @@ namespace ppbox
                     assert(0);
                     break;
             }
+            if (use_peer()) {
+                const_cast<ppbox::data::SegmentSource *>(seg_source_)->set_time_out(0);
+            }
         }
 
         void PeerSource::on_event(
