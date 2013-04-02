@@ -26,7 +26,7 @@ namespace ppbox
 
         PeerSource::PeerSource(
             boost::asio::io_service & io_svc)
-            : HttpSource(io_svc)
+            : ppbox::cdn::P2pSource(io_svc)
             , module_(util::daemon::use_module<ppbox::peer::PeerModule>(io_svc))
             , status_(NULL)
             , peer_fail_(false)
@@ -82,37 +82,6 @@ namespace ppbox
             return HttpSource::close(ec);
         }
 
-        ppbox::cdn::HttpStatistics const & PeerSource::http_stat() const
-        {
-            const_cast<PeerSource *>(this)->open_log(true);
-            return http_stat_;
-        }
-
-        void PeerSource::pptv_media(
-            ppbox::cdn::PptvMedia const & media)
-        {
-            pptv_media_ = &media;
-
-            status_ = module_.alloc_status();
-            parse_param(pptv_media().p2p_params());
-            switch (pptv_media().owner_type()) {
-                case ppbox::cdn::PptvMedia::ot_demuxer:
-                    pptv_media().demuxer().on<ppbox::demux::BufferingEvent>(boost::bind(&PeerSource::on_event, this, _1));
-                    seg_source_ = &pptv_media().demuxer().source();
-                    break;
-                case ppbox::cdn::PptvMedia::ot_merger:
-                     //pptv_media().merger().on<ppbox::demux::BufferingEvent>(boost::bind(&PeerSource::on_event, this, _1));
-                    seg_source_ = &pptv_media().merger().source();
-                    break;
-                default:
-                    assert(0);
-                    break;
-            }
-            if (use_peer()) {
-                const_cast<ppbox::data::SegmentSource *>(seg_source_)->set_time_out(0);
-            }
-        }
-
         void PeerSource::on_event(
             util::event::Event const & e)
         {
@@ -124,6 +93,9 @@ namespace ppbox
         void PeerSource::parse_param(
             std::string const & params)
         {
+            if (use_peer()) {
+                const_cast<ppbox::data::SegmentSource &>(seg_source()).set_time_out(0);
+            }
             size_t adv_time = 0;
             map_find(params, "advtime", adv_time, "&");
             if (adv_time > 0)
@@ -134,7 +106,7 @@ namespace ppbox
             framework::string::Url const & cdn_url,
             framework::string::Url & url)
         {
-            LOG_DEBUG("Use vod worker, BWType: " << pptv_media().jump().bw_type);
+            LOG_DEBUG("Use peer worker, BWType: " << pptv_media().jump().bw_type);
 
             url.protocol("http");
             url.host("127.0.0.1");
@@ -152,21 +124,9 @@ namespace ppbox
             return boost::system::error_code();
         }
 
-        void PeerSource::open_log(
-            bool end)
-        {
-            if (!end) {
-                http_stat_.begin_try();
-            } else {
-                http_stat_.end_try(http_.stat());
-                if (http_stat_.try_times == 1)
-                    http_stat_.response_data_time = http_stat_.total_elapse;
-            }
-        }
-
         bool PeerSource::use_peer()
         {
-            if (!peer_fail_ && seg_source_->num_try() > 3)
+            if (!peer_fail_ && seg_source().num_try() > 3)
                 peer_fail_ = true;
             return module_.port() > 0 && !peer_fail_;
         }

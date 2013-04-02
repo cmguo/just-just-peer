@@ -5,26 +5,10 @@
 
 #include "ppbox/peer/PeerModule.h"
 
-#include <ppbox/cdn/HttpStatistics.h>
-
-#include <ppbox/data/source/HttpSource.h>
-
-#include <util/event/Event.h>
-
-#include <framework/string/Url.h>
+#include <ppbox/cdn/P2pSource.h>
 
 namespace ppbox
 {
-    namespace data
-    {
-        class SegmentSource;
-    }
-
-    namespace cdn
-    {
-        class PptvMedia;
-    }
-
     namespace peer_worker
     {
         class ClientStatus;
@@ -34,7 +18,7 @@ namespace ppbox
     {
 
         class PeerSource
-            : public  ppbox::data::HttpSource
+            : public ppbox::cdn::P2pSource
         {
         public:
             PeerSource(
@@ -58,17 +42,6 @@ namespace ppbox
             virtual boost::system::error_code close(
                 boost::system::error_code & ec);
 
-        public:
-            ppbox::cdn::HttpStatistics const & http_stat() const;
-
-            void pptv_media(
-                ppbox::cdn::PptvMedia const & media);
-
-            ppbox::cdn::PptvMedia const & pptv_media()
-            {
-                return *pptv_media_;
-            }
-
         private:
             void on_event(
                 util::event::Event const & e);
@@ -81,9 +54,6 @@ namespace ppbox
                 framework::string::Url const & cdn_url, 
                 framework::string::Url & url);
 
-            void open_log(
-                bool end);
-
             bool use_peer();
 
         protected:
@@ -91,10 +61,7 @@ namespace ppbox
             ppbox::peer_worker::ClientStatus * status_;
 
         private:
-            ppbox::cdn::PptvMedia const * pptv_media_;
-            ppbox::data::SegmentSource const * seg_source_;
-            ppbox::cdn::HttpStatistics http_stat_;
-            bool peer_fail_;            
+            bool peer_fail_;
         };
 
     } // namespace peer
