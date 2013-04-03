@@ -96,6 +96,7 @@ namespace ppbox
             if (use_peer()) {
                 const_cast<ppbox::data::SegmentSource &>(seg_source()).set_time_out(0);
             }
+            status_ = module_.alloc_status();
             size_t adv_time = 0;
             map_find(params, "advtime", adv_time, "&");
             if (adv_time > 0)
