@@ -3,11 +3,7 @@
 #include "ppbox/peer/Common.h"
 #include "ppbox/peer/PeerModule.h"
 #include "ppbox/peer/Error.h"
-#define PPBOX_ENABLE_REGISTER_CLASS
-#include "ppbox/peer/VodPeerSource.h"
-#include "ppbox/peer/LivePeerSource.h"
-
-#include <ppbox/data/base/SourceBase.h>
+#include "ppbox/peer/ClassRegister.h"
 
 #include <ppbox/peer_worker/Name.h>
 
