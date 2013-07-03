@@ -82,11 +82,10 @@ namespace ppbox
             return HttpSource::close(ec);
         }
 
-        void PeerSource::on_event(
-            util::event::Event const & e)
+        void PeerSource::on_demux_stat(
+            ppbox::demux::DemuxStatistic const & stat)
         {
-            ppbox::demux::BufferingEvent const & event = *e.as<ppbox::demux::BufferingEvent>();
-            status_->update_buffer_time((boost::uint32_t)event.stat.buf_time());
+            status_->update_buffer_time((boost::uint32_t)stat.buf_time());
             module_.update_status(status_);
         }
 
