@@ -73,13 +73,15 @@ namespace ppbox
 
         boost::system::error_code LivePeerSource::make_url(
             framework::string::Url const & cdn_url, 
+            boost::uint64_t beg, 
+            boost::uint64_t end, 
             framework::string::Url & url)
         {
             ppbox::cdn::PptvLive const & live = (ppbox::cdn::PptvLive const &)pptv_media();
 
             framework::string::Url cdn_url2 = cdn_url;
             cdn_url2.path("/live/");
-            boost::system::error_code ec = PeerSource::make_url(cdn_url2, url);
+            boost::system::error_code ec = PeerSource::make_url(cdn_url2, beg, end, url);
 
             // "/live/<stream_id>/<file_time>"
             std::vector<std::string> vec;

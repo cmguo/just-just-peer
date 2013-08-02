@@ -29,6 +29,8 @@ namespace ppbox
 
         boost::system::error_code VodPeerSource::make_url(
             framework::string::Url const & cdn_url, 
+            boost::uint64_t beg, 
+            boost::uint64_t end, 
             framework::string::Url & url)
         {
             ppbox::cdn::PptvVod const & vod = (ppbox::cdn::PptvVod const &)pptv_media();
@@ -49,14 +51,14 @@ namespace ppbox
             ppbox::data::SegmentInfo info;
             vod.segment_info(no, info, ec);
 
-            ec = PeerSource::make_url(cdn_url, url);
+            ec = PeerSource::make_url(cdn_url, beg, end, url);
 
             if (!ec) {
                 url.path("/ppvaplaybyopen");
                 url.param("filelength", format(info.size));
                 url.param("headlength", format(info.head_size));
                 url.param("drag", status_->buffer_time() < 15000 ? "1" : "0");
-                url.param("headonly", "0");
+                url.param("headonly", end <= info.head_size ? "1" : "0");
             }
 
             return ec;

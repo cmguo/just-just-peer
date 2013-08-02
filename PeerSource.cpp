@@ -50,7 +50,7 @@ namespace ppbox
 
             if (use_peer()) {
                 framework::string::Url peer_url;
-                make_url(url, peer_url);
+                make_url(url, beg, end, peer_url);
                 return HttpSource::open(peer_url, beg, end, ec);
             } else {
                 return HttpSource::open(url, beg, end, ec);
@@ -68,7 +68,7 @@ namespace ppbox
 
             if (use_peer()) {
                 framework::string::Url peer_url;
-                make_url(url, peer_url);
+                make_url(url, beg, end, peer_url);
                 HttpSource::async_open(peer_url, beg, end, resp);
             } else {
                 HttpSource::async_open(url, beg, end, resp);
@@ -104,6 +104,8 @@ namespace ppbox
 
         boost::system::error_code PeerSource::make_url(
             framework::string::Url const & cdn_url,
+            boost::uint64_t beg, 
+            boost::uint64_t end, 
             framework::string::Url & url)
         {
             LOG_DEBUG("Use peer worker, BWType: " << pptv_media().jump().bw_type);

@@ -21,6 +21,8 @@ namespace ppbox
         private:
             virtual boost::system::error_code make_url(
                 framework::string::Url const & cdn_url, 
+                boost::uint64_t beg, 
+                boost::uint64_t end, 
                 framework::string::Url & url);
         };
 
