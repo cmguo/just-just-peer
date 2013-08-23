@@ -27,31 +27,30 @@ namespace ppbox
         {
         }
 
-        boost::system::error_code VodPeerSource::make_url(
-            framework::string::Url const & cdn_url, 
-            boost::uint64_t beg, 
-            boost::uint64_t end, 
-            framework::string::Url & url)
+        boost::system::error_code VodPeerSource::prepare(
+            framework::string::Url & url, 
+            boost::uint64_t & beg, 
+            boost::uint64_t & end, 
+            boost::system::error_code & ec)
         {
             ppbox::cdn::PptvVod const & vod = (ppbox::cdn::PptvVod const &)pptv_media();
             
-            char const * str_no = cdn_url.path().c_str() + 1;
+            char const * str_no = url.path().c_str() + 1;
             size_t no = 0;
             for (; *str_no >= '0' && *str_no <= '9'; ++str_no) {
                 no = no * 10 + (*str_no - '0');
             }
 
             // 格式不对的都直接通过CDN服务器下载
-            if (*str_no != '/') {
-                url = cdn_url;
-                return boost::system::error_code();
+            if (*str_no != '/' || !use_peer()) {
+                ec.clear();
+                return ec;
             }
 
-            boost::system::error_code ec;
             ppbox::data::SegmentInfo info;
             vod.segment_info(no, info, ec);
 
-            ec = PeerSource::make_url(cdn_url, beg, end, url);
+            PeerSource::prepare(url, beg, end, ec);
 
             if (!ec) {
                 url.path("/ppvaplaybyopen");

@@ -19,27 +19,15 @@ namespace ppbox
             ~LivePeerSource();
 
         public:
-            virtual boost::system::error_code open(
-                framework::string::Url const & url,
-                boost::uint64_t beg, 
-                boost::uint64_t end, 
-                boost::system::error_code & ec);
-
-            virtual void async_open(
-                framework::string::Url const & url,
-                boost::uint64_t beg, 
-                boost::uint64_t end, 
-                response_type const & resp);
-
             virtual boost::uint64_t total(
                 boost::system::error_code & ec);
 
         private:
-            virtual boost::system::error_code make_url(
-                framework::string::Url const & cdn_url, 
-                boost::uint64_t beg, 
-                boost::uint64_t end, 
-                framework::string::Url & url);
+            virtual boost::system::error_code prepare(
+                framework::string::Url & url, 
+                boost::uint64_t & beg, 
+                boost::uint64_t & end, 
+                boost::system::error_code & ec);
 
         private:
             size_t seq_;

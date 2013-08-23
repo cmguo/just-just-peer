@@ -39,49 +39,6 @@ namespace ppbox
                 module_.free_status(status_);
         }
 
-        boost::system::error_code PeerSource::open(
-            framework::string::Url const & url,
-            boost::uint64_t beg, 
-            boost::uint64_t end, 
-            boost::system::error_code & ec)
-        {
-            LOG_DEBUG("[open] url:"<<url.to_string()
-                <<" range: "<< beg << " - " << end);
-
-            if (use_peer()) {
-                framework::string::Url peer_url;
-                make_url(url, beg, end, peer_url);
-                return HttpSource::open(peer_url, beg, end, ec);
-            } else {
-                return HttpSource::open(url, beg, end, ec);
-            }
-        }
-
-        void PeerSource::async_open(
-            framework::string::Url const & url,
-            boost::uint64_t beg, 
-            boost::uint64_t end, 
-            response_type const & resp)
-        {
-            LOG_DEBUG("[async_open] url:"<<url.to_string()
-                <<" range: "<< beg << " - " << end);
-
-            if (use_peer()) {
-                framework::string::Url peer_url;
-                make_url(url, beg, end, peer_url);
-                HttpSource::async_open(peer_url, beg, end, resp);
-            } else {
-                HttpSource::async_open(url, beg, end, resp);
-            }
-        }
-
-        boost::system::error_code PeerSource::close(
-            boost::system::error_code & ec)
-        {
-            open_log(true);
-            return HttpSource::close(ec);
-        }
-
         void PeerSource::on_demux_stat(
             ppbox::demux::DemuxStatistic const & stat)
         {
@@ -102,28 +59,29 @@ namespace ppbox
                 status_->set_adv_duration(adv_time);
         }
 
-        boost::system::error_code PeerSource::make_url(
-            framework::string::Url const & cdn_url,
-            boost::uint64_t beg, 
-            boost::uint64_t end, 
-            framework::string::Url & url)
+        boost::system::error_code PeerSource::prepare(
+            framework::string::Url & url, 
+            boost::uint64_t & beg, 
+            boost::uint64_t & end, 
+            boost::system::error_code & ec)
         {
             LOG_DEBUG("Use peer worker, BWType: " << pptv_media().jump().bw_type);
 
+            std::string cdn_url = url.to_string();
+            url = framework::string::Url();
             url.protocol("http");
             url.host("127.0.0.1");
             url.svc(format(module_.port()));
-            url.param("url", cdn_url.to_string());
+            url.param("url", cdn_url);
             url.param("BWType", format(pptv_media().jump().bw_type));
             url.param("autoclose", "false");
 
             url.encode();
 
-            open_log(false);
-
-            status_->set_current_url(cdn_url.to_string());
-
-            return boost::system::error_code();
+            status_->set_current_url(cdn_url);
+            
+            ec.clear();
+            return ec;
         }
 
         bool PeerSource::use_peer()

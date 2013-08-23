@@ -30,36 +30,6 @@ namespace ppbox
         {
         }
 
-        boost::system::error_code LivePeerSource::open(
-            framework::string::Url const & url,
-            boost::uint64_t beg, 
-            boost::uint64_t end, 
-            boost::system::error_code & ec)
-        {
-            if (!use_peer()) {
-                beg += 1400;
-            } else if (beg > 0) {
-                // 不能断点续传
-                return ec = framework::system::logic_error::not_supported;
-            }
-            return PeerSource::open(url, beg, end, ec);
-        }
-
-        void LivePeerSource::async_open(
-            framework::string::Url const & url,
-            boost::uint64_t beg, 
-            boost::uint64_t end, 
-            response_type const & resp)
-        {
-            if (!use_peer()) {
-                beg += 1400;
-            } else if (beg > 0) {
-                get_io_service().post(boost::bind(resp, framework::system::logic_error::not_supported));
-                return;
-            }
-            return PeerSource::async_open(url, beg, end, resp);
-        }
-
         boost::uint64_t LivePeerSource::total(
             boost::system::error_code & ec)
         {
@@ -71,23 +41,31 @@ namespace ppbox
             }
         }
 
-        boost::system::error_code LivePeerSource::make_url(
-            framework::string::Url const & cdn_url, 
-            boost::uint64_t beg, 
-            boost::uint64_t end, 
-            framework::string::Url & url)
+        boost::system::error_code LivePeerSource::prepare(
+            framework::string::Url & url, 
+            boost::uint64_t & beg, 
+            boost::uint64_t & end, 
+            boost::system::error_code & ec)
         {
             ppbox::cdn::PptvLive const & live = (ppbox::cdn::PptvLive const &)pptv_media();
 
-            framework::string::Url cdn_url2 = cdn_url;
-            cdn_url2.path("/live/");
-            boost::system::error_code ec = PeerSource::make_url(cdn_url2, beg, end, url);
+            if (!use_peer()) {
+                beg += 1400;
+                ec.clear();
+                return ec;
+            } else if (beg > 0) {
+                // 不能断点续传
+                return ec = framework::system::logic_error::not_supported;
+            }
 
-            // "/live/<stream_id>/<file_time>"
+             // "/live/<stream_id>/<file_time>"
             std::vector<std::string> vec;
             std::vector<std::string> vec1;
-            slice<std::string>(cdn_url.path(), std::back_inserter(vec), "/");
+            slice<std::string>(url.path(), std::back_inserter(vec), "/");
             slice<std::string>(vec[3], std::back_inserter(vec1), ".");
+
+            url.path("/live/");
+            PeerSource::prepare(url, beg, end, ec);
 
             if (!ec) {
                 url.path("/playlive.flv");

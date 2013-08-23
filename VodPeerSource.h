@@ -19,11 +19,11 @@ namespace ppbox
             ~VodPeerSource();
 
         private:
-            virtual boost::system::error_code make_url(
-                framework::string::Url const & cdn_url, 
-                boost::uint64_t beg, 
-                boost::uint64_t end, 
-                framework::string::Url & url);
+            virtual boost::system::error_code prepare(
+                framework::string::Url & url, 
+                boost::uint64_t & beg, 
+                boost::uint64_t & end, 
+                boost::system::error_code & ec);
         };
 
         PPBOX_REGISTER_URL_SOURCE("ppvod", VodPeerSource);

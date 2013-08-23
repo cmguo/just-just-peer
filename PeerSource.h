@@ -26,22 +26,6 @@ namespace ppbox
 
             virtual ~PeerSource();
 
-        public:
-            virtual boost::system::error_code open(
-                framework::string::Url const & url,
-                boost::uint64_t beg, 
-                boost::uint64_t end, 
-                boost::system::error_code & ec);
-
-            virtual void async_open(
-                framework::string::Url const & url,
-                boost::uint64_t beg, 
-                boost::uint64_t end, 
-                response_type const & resp);
-
-            virtual boost::system::error_code close(
-                boost::system::error_code & ec);
-
         private:
             virtual void on_demux_stat(
                 ppbox::demux::DemuxStatistic const & stat);
@@ -50,11 +34,11 @@ namespace ppbox
             virtual void parse_param(
                 std::string const & params);
 
-            virtual boost::system::error_code make_url(
-                framework::string::Url const & cdn_url, 
-                boost::uint64_t beg, 
-                boost::uint64_t end, 
-                framework::string::Url & url);
+            virtual boost::system::error_code prepare(
+                framework::string::Url & url, 
+                boost::uint64_t & beg, 
+                boost::uint64_t & end, 
+                boost::system::error_code & ec);
 
             bool use_peer();
 
