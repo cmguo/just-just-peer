@@ -71,7 +71,7 @@ namespace ppbox
                 url.path("/playlive.flv");
                 url.param("channelid", live.video().rid);
                 url.param("rid", live.video().rid);
-                url.param("datarate", format(live.video().bitrate));
+                url.param("datarate", format(live.video().bitrate / 1000)); // kbps
                 url.param("replay", "1");
                 url.param("start", vec1[0]);
                 url.param("interval", format(live.segment().interval));
