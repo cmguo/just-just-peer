@@ -5,6 +5,8 @@
 
 #include <ppbox/cdn/PptvVod.h>
 
+#include <util/protocol/http/HttpSocket.hpp>
+
 #include <framework/string/Format.h>
 using namespace framework::string;
 
@@ -27,7 +29,25 @@ namespace ppbox
         {
         }
 
-        boost::system::error_code VodPeerSource::prepare(
+        std::size_t VodPeerSource::private_read_some(
+            buffers_t const & buffers,
+            boost::system::error_code & ec)
+        {
+            assert(http_.is_open(ec));
+            return http_.read_some(buffers, ec);
+        }
+
+        void VodPeerSource::private_async_read_some(
+            buffers_t const & buffers,
+            util::stream::StreamHandler const & handler)
+        {
+            boost::system::error_code ec;
+            (void)ec;
+            assert(http_.is_open(ec));
+            http_.async_read_some(buffers, handler);
+        }
+
+        bool VodPeerSource::prepare(
             framework::string::Url & url, 
             boost::uint64_t & beg, 
             boost::uint64_t & end, 
@@ -44,7 +64,7 @@ namespace ppbox
             // 格式不对的都直接通过CDN服务器下载
             if (*str_no != '/' || !use_peer()) {
                 ec.clear();
-                return ec;
+                return true;
             }
 
             ppbox::data::SegmentInfo info;
@@ -60,7 +80,7 @@ namespace ppbox
                 url.param("headonly", end <= info.head_size ? "1" : "0");
             }
 
-            return ec;
+            return !ec;
         }
 
     } // namespace peer

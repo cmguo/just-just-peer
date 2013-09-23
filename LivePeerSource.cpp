@@ -41,7 +41,7 @@ namespace ppbox
             }
         }
 
-        boost::system::error_code LivePeerSource::prepare(
+        bool LivePeerSource::prepare(
             framework::string::Url & url, 
             boost::uint64_t & beg, 
             boost::uint64_t & end, 
@@ -52,10 +52,11 @@ namespace ppbox
             if (!use_peer()) {
                 beg += 1400;
                 ec.clear();
-                return ec;
+                return true;
             } else if (beg > 0) {
                 // 不能断点续传
-                return ec = framework::system::logic_error::not_supported;
+                ec = framework::system::logic_error::not_supported;
+                return false;
             }
 
              // "/live/<stream_id>/<file_time>"
@@ -81,7 +82,7 @@ namespace ppbox
 
             status_->set_current_url(url.to_string());
 
-            return ec;
+            return !ec;
         }
 
     } // namespace peer

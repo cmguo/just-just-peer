@@ -23,7 +23,7 @@ namespace ppbox
                 boost::system::error_code & ec);
 
         private:
-            virtual boost::system::error_code prepare(
+            virtual bool prepare(
                 framework::string::Url & url, 
                 boost::uint64_t & beg, 
                 boost::uint64_t & end, 
@@ -33,8 +33,8 @@ namespace ppbox
             size_t seq_;
         };
 
-        PPBOX_REGISTER_URL_SOURCE("pplive2", LivePeerSource);
-        PPBOX_REGISTER_URL_SOURCE("pplive3", LivePeerSource);
+        UTIL_REGISTER_URL_SOURCE("pplive2", LivePeerSource);
+        UTIL_REGISTER_URL_SOURCE("pplive3", LivePeerSource);
 
     } // namespace peer
 } // namespace ppbox

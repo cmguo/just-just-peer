@@ -59,7 +59,7 @@ namespace ppbox
                 status_->set_adv_duration(adv_time);
         }
 
-        boost::system::error_code PeerSource::prepare(
+        bool PeerSource::prepare(
             framework::string::Url & url, 
             boost::uint64_t & beg, 
             boost::uint64_t & end, 
@@ -81,7 +81,7 @@ namespace ppbox
             status_->set_current_url(cdn_url);
             
             ec.clear();
-            return ec;
+            return true;
         }
 
         bool PeerSource::use_peer()
