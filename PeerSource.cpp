@@ -88,7 +88,7 @@ namespace ppbox
         {
             if (!peer_fail_ && seg_source().num_try() > 3)
                 peer_fail_ = true;
-            return module_.port() > 0 && !peer_fail_;
+            return module_.port() > 0 && !peer_fail_ && pptv_media().jump().bw_type != 100;
         }
 
     } // namespace peer
