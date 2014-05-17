@@ -52,7 +52,6 @@ PROJECT_DEPENDS			:= \
 				/ppbox/dac \
 				/ppbox/avformat \
 				/ppbox/common \
-				/base/tinyxml \
 				$(PROJECT_DEPENDS)
 
 ## 该项目特定的引用库
