@@ -27,8 +27,8 @@ namespace ppbox
             virtual ~PeerSource();
 
         private:
-            virtual void on_demux_stat(
-                ppbox::demux::DemuxStatistic const & stat);
+            virtual void on_stream_status(
+                ppbox::data::StreamStatus const & stat);
 
         protected:
             virtual void parse_param(

@@ -14,9 +14,9 @@ using namespace ppbox::dac;
 #endif
 
 #ifdef PPBOX_CONTAIN_PEER_WORKER
-#include <ppbox/peer_worker/StatusProxy.h>
-#include <ppbox/peer_worker/WorkerModule.h>
-using namespace ppbox::peer_worker;
+namespace ppbox { namespace peer_worker {
+    void register_module(util::daemon::Daemon & daemon);
+}}
 #else
 #include <framework/process/Process.h>
 #include <framework/timer/Timer.h>
@@ -55,8 +55,7 @@ namespace ppbox
 #endif
         {
 #ifdef PPBOX_CONTAIN_PEER_WORKER
-            util::daemon::use_module<ppbox::peer_worker::WorkerModule>(daemon);
-            util::daemon::use_module<ppbox::peer_worker::StatusProxy>(daemon);
+            ppbox::peer_worker::register_module(daemon);
 #else
             process_ = new Process;
             timer_ = new Timer(timer_queue(), 
