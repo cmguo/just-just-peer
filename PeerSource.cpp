@@ -40,7 +40,7 @@ namespace ppbox
         }
 
         void PeerSource::on_stream_status(
-            ppbox::data::StreamStatus const & stat)
+            ppbox::avbase::StreamStatus const & stat)
         {
             status_->update_buffer_time((boost::uint32_t)stat.buf_time());
             module_.update_status(status_);
