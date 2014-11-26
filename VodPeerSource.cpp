@@ -3,7 +3,7 @@
 #include "ppbox/peer/Common.h"
 #include "ppbox/peer/VodPeerSource.h"
 
-#include <ppbox/cdn/PptvVod.h>
+#include <ppbox/cdn/pptv/PptvVod.h>
 
 #include <util/protocol/http/HttpSocket.hpp>
 

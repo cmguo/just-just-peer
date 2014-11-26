@@ -3,7 +3,7 @@
 #include "ppbox/peer/Common.h"
 #include "ppbox/peer/PeerSource.h"
 
-#include <ppbox/cdn/PptvMedia.h>
+#include <ppbox/cdn/pptv/PptvMedia.h>
 
 #include <ppbox/demux/base/DemuxEvent.h>
 #include <ppbox/demux/segment/SegmentDemuxer.h>

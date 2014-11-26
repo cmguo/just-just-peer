@@ -5,7 +5,7 @@
 
 #include "ppbox/peer/PeerModule.h"
 
-#include <ppbox/cdn/P2pSource.h>
+#include <ppbox/cdn/pptv/P2pSource.h>
 
 namespace ppbox
 {

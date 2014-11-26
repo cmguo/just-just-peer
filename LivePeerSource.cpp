@@ -3,7 +3,7 @@
 #include "ppbox/peer/Common.h"
 #include "ppbox/peer/LivePeerSource.h"
 
-#include <ppbox/cdn/PptvLive.h>
+#include <ppbox/cdn/pptv/PptvLive.h>
 
 #include <framework/logger/StreamRecord.h>
 #include <framework/string/Format.h>
