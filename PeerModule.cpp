@@ -1,20 +1,20 @@
 // PeerModule.cpp
 
-#include "ppbox/peer/Common.h"
-#include "ppbox/peer/PeerModule.h"
-#include "ppbox/peer/Error.h"
-#include "ppbox/peer/ClassRegister.h"
+#include "just/peer/Common.h"
+#include "just/peer/PeerModule.h"
+#include "just/peer/Error.h"
+#include "just/peer/ClassRegister.h"
 
-#include <ppbox/peer_worker/Name.h>
+#include <just/peer_worker/Name.h>
 
-#ifndef PPBOX_DISABLE_DAC
-#include <ppbox/dac/DacModule.h>
-#include <ppbox/dac/DacInfoWorker.h>
-using namespace ppbox::dac;
+#ifndef JUST_DISABLE_DAC
+#include <just/dac/DacModule.h>
+#include <just/dac/DacInfoWorker.h>
+using namespace just::dac;
 #endif
 
-#ifdef PPBOX_CONTAIN_PEER_WORKER
-namespace ppbox { namespace peer_worker {
+#ifdef JUST_CONTAIN_PEER_WORKER
+namespace just { namespace peer_worker {
     void register_module(util::daemon::Daemon & daemon);
 }}
 #else
@@ -34,28 +34,28 @@ using namespace framework::string;
 #include <boost/bind.hpp>
 using namespace boost::system;
 
-namespace ppbox
+namespace just
 {
     namespace peer
     {
 
-        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("ppbox.peer.PeerModule", framework::logger::Debug)
+        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("just.peer.PeerModule", framework::logger::Debug)
 
         PeerModule::PeerModule(
             util::daemon::Daemon & daemon)
-            : ppbox::common::CommonModuleBase<PeerModule>(daemon, "PeerModule")
-#ifndef PPBOX_DISABLE_DAC
-            , dac_(util::daemon::use_module<ppbox::dac::DacModule>(daemon))
+            : just::common::CommonModuleBase<PeerModule>(daemon, "PeerModule")
+#ifndef JUST_DISABLE_DAC
+            , dac_(util::daemon::use_module<just::dac::DacModule>(daemon))
 #endif
-            , portMgr_(util::daemon::use_module<ppbox::common::PortManager>(daemon))
+            , portMgr_(util::daemon::use_module<just::common::PortManager>(daemon))
             , port_(9000)
-#ifndef PPBOX_CONTAIN_PEER_WORKER
+#ifndef JUST_CONTAIN_PEER_WORKER
             , mutex_(9000)
             , is_locked_(false)
 #endif
         {
-#ifdef PPBOX_CONTAIN_PEER_WORKER
-            ppbox::peer_worker::register_module(daemon);
+#ifdef JUST_CONTAIN_PEER_WORKER
+            just::peer_worker::register_module(daemon);
 #else
             process_ = new Process;
             timer_ = new Timer(timer_queue(), 
@@ -63,23 +63,23 @@ namespace ppbox
                 boost::bind(&PeerModule::check, this));
 #endif
 
-            ppbox::peer_worker::ClientStatus::set_pool(framework::memory::BigFixedPool(
+            just::peer_worker::ClientStatus::set_pool(framework::memory::BigFixedPool(
                 framework::memory::MemoryReference<framework::memory::SharedMemory>(shared_memory())));
 
-            stats_ = (framework::container::List<ppbox::peer_worker::ClientStatus> *)shared_memory()
-                .alloc_with_id(SHARED_OBJECT_ID_DEMUX, sizeof(framework::container::List<ppbox::peer_worker::ClientStatus>));
+            stats_ = (framework::container::List<just::peer_worker::ClientStatus> *)shared_memory()
+                .alloc_with_id(SHARED_OBJECT_ID_DEMUX, sizeof(framework::container::List<just::peer_worker::ClientStatus>));
             if (!stats_)
-                stats_ = (framework::container::List<ppbox::peer_worker::ClientStatus> *)shared_memory()
+                stats_ = (framework::container::List<just::peer_worker::ClientStatus> *)shared_memory()
                 .get_by_id(SHARED_OBJECT_ID_DEMUX);
-            new (stats_) framework::container::List<ppbox::peer_worker::ClientStatus>;
+            new (stats_) framework::container::List<just::peer_worker::ClientStatus>;
         }
 
         PeerModule::~PeerModule()
         {
-            ppbox::peer_worker::ClientStatus::set_pool(framework::memory::BigFixedPool(
+            just::peer_worker::ClientStatus::set_pool(framework::memory::BigFixedPool(
                 framework::memory::PrivateMemory()));
 
-#ifndef PPBOX_CONTAIN_PEER_WORKER
+#ifndef JUST_CONTAIN_PEER_WORKER
 
             if (is_lock()) {
                 mutex_.unlock();
@@ -101,11 +101,11 @@ namespace ppbox
         {
             error_code ec;
             LOG_INFO("[startup]");
-#ifndef PPBOX_DISABLE_DAC
+#ifndef JUST_DISABLE_DAC
             dac_.set_vod_version(version());
             dac_.set_vod_name(name());
 #endif
-#ifndef PPBOX_CONTAIN_PEER_WORKER
+#ifndef JUST_CONTAIN_PEER_WORKER
             timer_->start();
 
             if (is_lock()) {
@@ -113,13 +113,13 @@ namespace ppbox
 #ifdef __APPLE__
                 boost::filesystem::path cmd_file(MAC_PEER_WORKER);
 #else
-                boost::filesystem::path cmd_file(ppbox::peer_worker::name_string());
+                boost::filesystem::path cmd_file(just::peer_worker::name_string());
 #endif
                 Process::CreateParamter param;
                 param.wait = true;
                 process_->open(cmd_file, param, ec);
                 if (!ec) {
-                    portMgr_.get_port(ppbox::common::vod,port_);
+                    portMgr_.get_port(just::common::vod,port_);
                     LOG_INFO("[startup] ok port:"<<port_);
                 } else {
                     LOG_WARN("[startup] ec = " << ec.message());
@@ -132,7 +132,7 @@ namespace ppbox
                 }
             }
 #else
-            portMgr_.get_port(ppbox::common::vod,port_);
+            portMgr_.get_port(just::common::vod,port_);
             LOG_INFO("[startup] ok port:"<<port_);
 #endif
             return ec;
@@ -140,7 +140,7 @@ namespace ppbox
 
         void PeerModule::shutdown()
         {
-#ifndef PPBOX_CONTAIN_PEER_WORKER
+#ifndef JUST_CONTAIN_PEER_WORKER
             if (process_) {
                 error_code ec;
                 process_->signal(Signal::sig_int, ec);
@@ -165,27 +165,27 @@ namespace ppbox
 
         void PeerModule::check()
         {
-#ifndef PPBOX_CONTAIN_PEER_WORKER
+#ifndef JUST_CONTAIN_PEER_WORKER
             error_code ec;
             if (is_lock()) {
                 if (process_ && !process_->is_alive(ec)) {
                     LOG_ERROR("[check] worker is dead: " << ec.message());
 
-#ifndef PPBOX_DISABLE_DAC
-                    util::daemon::use_module<ppbox::dac::DacModule>(get_daemon())
+#ifndef JUST_DISABLE_DAC
+                    util::daemon::use_module<just::dac::DacModule>(get_daemon())
                         .submit(DacRestartInfo(DacRestartInfo::vod));
 #endif
                     process_->close(ec);
 #ifdef __APPLE__
                     boost::filesystem::path cmd_file(MAC_PEER_WORKER);
 #else
-                    boost::filesystem::path cmd_file(ppbox::peer_worker::name_string());
+                    boost::filesystem::path cmd_file(just::peer_worker::name_string());
 #endif
                     Process::CreateParamter param;
                     param.wait = true;
                     process_->open(cmd_file, param, ec);
                     if (!ec) {
-                        portMgr_.get_port(ppbox::common::vod,port_);
+                        portMgr_.get_port(just::common::vod,port_);
                         LOG_INFO("[check] ok port:"<<port_);
                     } else {
                         LOG_WARN("[check] ec = " << ec.message());
@@ -201,7 +201,7 @@ namespace ppbox
         bool PeerModule::is_alive()
         {
             error_code ec;
-#ifdef PPBOX_CONTAIN_PEER_WORKER
+#ifdef JUST_CONTAIN_PEER_WORKER
             return true;
 #else
 
@@ -212,7 +212,7 @@ namespace ppbox
 #ifdef __APPLE__
                 boost::filesystem::path cmd_file(MAC_PEER_WORKER);
 #else
-                boost::filesystem::path cmd_file(ppbox::peer_worker::name_string());
+                boost::filesystem::path cmd_file(just::peer_worker::name_string());
 #endif
                 process.open(cmd_file, ec);
                 return !ec;
@@ -220,37 +220,37 @@ namespace ppbox
 #endif
         }
 
-        ppbox::peer_worker::ClientStatus * PeerModule::alloc_status()
+        just::peer_worker::ClientStatus * PeerModule::alloc_status()
         {
-            ppbox::peer_worker::ClientStatus * stat = new ppbox::peer_worker::ClientStatus;
+            just::peer_worker::ClientStatus * stat = new just::peer_worker::ClientStatus;
             stats_->insert(stat);
             return stat;
         }
 
         void PeerModule::free_status(
-            ppbox::peer_worker::ClientStatus * status)
+            just::peer_worker::ClientStatus * status)
         {
             // auto detach from list
             delete status;
         }
 
         void PeerModule::update_status(
-            ppbox::peer_worker::ClientStatus * status)
+            just::peer_worker::ClientStatus * status)
         {
         }
 
         std::string PeerModule::version()
         {
-            //return ppbox::peer_worker::version_string();
+            //return just::peer_worker::version_string();
             return "1.0.0.1";
         }
 
         std::string PeerModule::name()
         {
-            return ppbox::peer_worker::name_string();
+            return just::peer_worker::name_string();
         }
 
-#ifndef PPBOX_CONTAIN_PEER_WORKER
+#ifndef JUST_CONTAIN_PEER_WORKER
         bool PeerModule::is_lock()
         {
             if (!is_locked_) {
@@ -262,4 +262,4 @@ namespace ppbox
 #endif
 
     } // namespace peer
-} // namespace ppbox
+} // namespace just

@@ -1,10 +1,10 @@
 // Name.h
 
-#ifndef _PPBOX_PEER_NAME_H_
-#define _PPBOX_PEER_NAME_H_
+#ifndef _JUST_PEER_NAME_H_
+#define _JUST_PEER_NAME_H_
 
-#include "ppbox/peer/Define.h"
+#include "just/peer/Define.h"
 
 #include <framework/system/AutoName.h>
 
-#endif // _PPBOX_PEER_NAME_H_
+#endif // _JUST_PEER_NAME_H_

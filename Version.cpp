@@ -1,5 +1,5 @@
 // Version.cpp
 
-#include "ppbox/peer/Common.h"
+#include "just/peer/Common.h"
 #define VERSION_SOURCE
-#include "ppbox/peer/Version.h"
+#include "just/peer/Version.h"

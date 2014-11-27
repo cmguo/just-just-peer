@@ -1,11 +1,11 @@
 // VodPeerSource.h
 
-#ifndef PPBOX_PEER_VOD_PEER_SOURCE_H_
-#define PPBOX_PEER_VOD_PEER_SOURCE_H_
+#ifndef JUST_PEER_VOD_PEER_SOURCE_H_
+#define JUST_PEER_VOD_PEER_SOURCE_H_
 
-#include "ppbox/peer/PeerSource.h"
+#include "just/peer/PeerSource.h"
 
-namespace ppbox
+namespace just
 {
     namespace peer
     {
@@ -40,6 +40,6 @@ namespace ppbox
         UTIL_REGISTER_URL_SOURCE("ppvod2", VodPeerSource);
 
     } // namespace peer
-} // namespace ppbox
+} // namespace just
 
-#endif // PPBOX_PEER_VOD_PEER_SOURCE_H_
+#endif // JUST_PEER_VOD_PEER_SOURCE_H_

@@ -1,9 +1,9 @@
 // VodPeerSource.cpp
 
-#include "ppbox/peer/Common.h"
-#include "ppbox/peer/VodPeerSource.h"
+#include "just/peer/Common.h"
+#include "just/peer/VodPeerSource.h"
 
-#include <ppbox/cdn/pptv/PptvVod.h>
+#include <just/cdn/pptv/PptvVod.h>
 
 #include <util/protocol/http/HttpSocket.hpp>
 
@@ -12,12 +12,12 @@ using namespace framework::string;
 
 #include <framework/logger/StreamRecord.h>
 
-namespace ppbox
+namespace just
 {
     namespace peer
     {
 
-        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("ppbox.peer.VodPeerSource", framework::logger::Debug);
+        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("just.peer.VodPeerSource", framework::logger::Debug);
 
         VodPeerSource::VodPeerSource(
             boost::asio::io_service & io_svc)
@@ -53,7 +53,7 @@ namespace ppbox
             boost::uint64_t & end, 
             boost::system::error_code & ec)
         {
-            ppbox::cdn::PptvVod const & vod = (ppbox::cdn::PptvVod const &)pptv_media();
+            just::cdn::PptvVod const & vod = (just::cdn::PptvVod const &)pptv_media();
             
             char const * str_no = url.path().c_str() + 1;
             size_t no = 0;
@@ -67,7 +67,7 @@ namespace ppbox
                 return true;
             }
 
-            ppbox::data::SegmentInfo info;
+            just::data::SegmentInfo info;
             vod.segment_info(no, info, ec);
 
             PeerSource::prepare(url, beg, end, ec);
@@ -84,4 +84,4 @@ namespace ppbox
         }
 
     } // namespace peer
-} // namespace ppbox
+} // namespace just

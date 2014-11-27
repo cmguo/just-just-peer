@@ -1,13 +1,13 @@
 // PeerSource.h
 
-#ifndef PPBOX_PEER_PEER_SOURCE_H_
-#define PPBOX_PEER_PEER_SOURCE_H_
+#ifndef JUST_PEER_PEER_SOURCE_H_
+#define JUST_PEER_PEER_SOURCE_H_
 
-#include "ppbox/peer/PeerModule.h"
+#include "just/peer/PeerModule.h"
 
-#include <ppbox/cdn/pptv/P2pSource.h>
+#include <just/cdn/pptv/P2pSource.h>
 
-namespace ppbox
+namespace just
 {
     namespace peer_worker
     {
@@ -18,7 +18,7 @@ namespace ppbox
     {
 
         class PeerSource
-            : public ppbox::cdn::P2pSource
+            : public just::cdn::P2pSource
         {
         public:
             PeerSource(
@@ -28,7 +28,7 @@ namespace ppbox
 
         private:
             virtual void on_stream_status(
-                ppbox::avbase::StreamStatus const & stat);
+                just::avbase::StreamStatus const & stat);
 
         protected:
             virtual void parse_param(
@@ -44,13 +44,13 @@ namespace ppbox
 
         protected:
             PeerModule & module_;
-            ppbox::peer_worker::ClientStatus * status_;
+            just::peer_worker::ClientStatus * status_;
 
         private:
             bool peer_fail_;
         };
 
     } // namespace peer
-} // namespace ppbox
+} // namespace just
 
-#endif // PPBOX_PEER_PEER_SOURCE_H_
+#endif // JUST_PEER_PEER_SOURCE_H_

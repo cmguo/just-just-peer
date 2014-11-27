@@ -1,16 +1,16 @@
 // PeerModule.h
 
-#ifndef _PPBOX_PEER_PEER_MODULE_H_
-#define _PPBOX_PEER_PEER_MODULE_H_
+#ifndef _JUST_PEER_PEER_MODULE_H_
+#define _JUST_PEER_PEER_MODULE_H_
 
-#include <ppbox/common/PortManager.h>
-#include <ppbox/peer_worker/ClientStatus.h>
+#include <just/common/PortManager.h>
+#include <just/peer_worker/ClientStatus.h>
 
-#ifndef PPBOX_DISABLE_DAC
-#include <ppbox/dac/DacModule.h>
+#ifndef JUST_DISABLE_DAC
+#include <just/dac/DacModule.h>
 #endif
 
-#ifndef PPBOX_CONTAIN_PEER_WORKER
+#ifndef JUST_CONTAIN_PEER_WORKER
 #include <framework/process/NamedMutex.h>
 
 namespace framework
@@ -20,13 +20,13 @@ namespace framework
 }
 #endif
 
-namespace ppbox
+namespace just
 {
     namespace peer
     {
 
         class PeerModule
-            : public ppbox::common::CommonModuleBase<PeerModule>
+            : public just::common::CommonModuleBase<PeerModule>
         {
         public:
 
@@ -48,7 +48,7 @@ namespace ppbox
 
             bool is_alive();
 
-#ifndef PPBOX_CONTAIN_PEER_WORKER
+#ifndef JUST_CONTAIN_PEER_WORKER
             framework::process::Process const & process() const
             {
                 return *process_;
@@ -56,13 +56,13 @@ namespace ppbox
 #endif
 
         public:
-            ppbox::peer_worker::ClientStatus * alloc_status();
+            just::peer_worker::ClientStatus * alloc_status();
 
             void free_status(
-                ppbox::peer_worker::ClientStatus * status);
+                just::peer_worker::ClientStatus * status);
 
             void update_status(
-                ppbox::peer_worker::ClientStatus * status);
+                just::peer_worker::ClientStatus * status);
 
         public:
             static std::string version();
@@ -75,15 +75,15 @@ namespace ppbox
             bool is_lock();
 
         private:
-#ifndef PPBOX_DISABLE_DAC
-            ppbox::dac::DacModule& dac_;
+#ifndef JUST_DISABLE_DAC
+            just::dac::DacModule& dac_;
 #endif
-            ppbox::common::PortManager &portMgr_;
+            just::common::PortManager &portMgr_;
 
             boost::uint16_t port_;
 
-            framework::container::List<ppbox::peer_worker::ClientStatus> * stats_;
-#ifndef PPBOX_CONTAIN_PEER_WORKER
+            framework::container::List<just::peer_worker::ClientStatus> * stats_;
+#ifndef JUST_CONTAIN_PEER_WORKER
         private:
             framework::process::Process * process_;
             framework::timer::Timer * timer_;
@@ -95,6 +95,6 @@ namespace ppbox
         };
 
     } // namespace peer
-} // namespace ppbox
+} // namespace just
 
-#endif // _PPBOX_PEER_PEER_MODULE_H_
+#endif // _JUST_PEER_PEER_MODULE_H_

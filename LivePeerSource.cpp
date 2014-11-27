@@ -1,9 +1,9 @@
 // LivePeerSource.cpp
 
-#include "ppbox/peer/Common.h"
-#include "ppbox/peer/LivePeerSource.h"
+#include "just/peer/Common.h"
+#include "just/peer/LivePeerSource.h"
 
-#include <ppbox/cdn/pptv/PptvLive.h>
+#include <just/cdn/pptv/PptvLive.h>
 
 #include <framework/logger/StreamRecord.h>
 #include <framework/string/Format.h>
@@ -12,12 +12,12 @@ using namespace framework::string;
 
 #include <boost/bind.hpp>
 
-namespace ppbox
+namespace just
 {
     namespace peer
     {
 
-        //FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("ppbox.peer.LivePeerSource", Debug);
+        //FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("just.peer.LivePeerSource", Debug);
 
         LivePeerSource::LivePeerSource(
             boost::asio::io_service & io_svc)
@@ -47,7 +47,7 @@ namespace ppbox
             boost::uint64_t & end, 
             boost::system::error_code & ec)
         {
-            ppbox::cdn::PptvLive const & live = (ppbox::cdn::PptvLive const &)pptv_media();
+            just::cdn::PptvLive const & live = (just::cdn::PptvLive const &)pptv_media();
 
             if (!use_peer()) {
                 beg += 1400;
@@ -86,4 +86,4 @@ namespace ppbox
         }
 
     } // namespace peer
-} // namespace ppbox
+} // namespace just

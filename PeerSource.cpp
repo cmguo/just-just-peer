@@ -1,33 +1,33 @@
 // PeerSource.cpp
 
-#include "ppbox/peer/Common.h"
-#include "ppbox/peer/PeerSource.h"
+#include "just/peer/Common.h"
+#include "just/peer/PeerSource.h"
 
-#include <ppbox/cdn/pptv/PptvMedia.h>
+#include <just/cdn/pptv/PptvMedia.h>
 
-#include <ppbox/demux/base/DemuxEvent.h>
-#include <ppbox/demux/segment/SegmentDemuxer.h>
+#include <just/demux/base/DemuxEvent.h>
+#include <just/demux/segment/SegmentDemuxer.h>
 
-#include <ppbox/merge/MergerBase.h>
+#include <just/merge/MergerBase.h>
 
-#include <ppbox/data/segment/SegmentSource.h>
+#include <just/data/segment/SegmentSource.h>
 
 #include <framework/logger/Logger.h>
 #include <framework/logger/StreamRecord.h>
 #include <framework/string/Format.h>
 using namespace framework::string;
 
-namespace ppbox
+namespace just
 {
     namespace peer
     {
 
-        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("ppbox.peer.PeerSource", framework::logger::Debug);
+        FRAMEWORK_LOGGER_DECLARE_MODULE_LEVEL("just.peer.PeerSource", framework::logger::Debug);
 
         PeerSource::PeerSource(
             boost::asio::io_service & io_svc)
-            : ppbox::cdn::P2pSource(io_svc)
-            , module_(util::daemon::use_module<ppbox::peer::PeerModule>(io_svc))
+            : just::cdn::P2pSource(io_svc)
+            , module_(util::daemon::use_module<just::peer::PeerModule>(io_svc))
             , status_(NULL)
             , peer_fail_(false)
         {
@@ -40,7 +40,7 @@ namespace ppbox
         }
 
         void PeerSource::on_stream_status(
-            ppbox::avbase::StreamStatus const & stat)
+            just::avbase::StreamStatus const & stat)
         {
             status_->update_buffer_time((boost::uint32_t)stat.buf_time());
             module_.update_status(status_);
@@ -50,7 +50,7 @@ namespace ppbox
             std::string const & params)
         {
             if (use_peer()) {
-                const_cast<ppbox::data::SegmentSource &>(seg_source()).set_time_out(0);
+                const_cast<just::data::SegmentSource &>(seg_source()).set_time_out(0);
             }
             status_ = module_.alloc_status();
             size_t adv_time = 0;
@@ -92,4 +92,4 @@ namespace ppbox
         }
 
     } // namespace peer
-} // namespace ppbox
+} // namespace just
