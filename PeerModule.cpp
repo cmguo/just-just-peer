@@ -97,9 +97,9 @@ namespace just
         }
 
 
-        error_code PeerModule::startup()
+        bool PeerModule::startup(
+            error_code & ec)
         {
-            error_code ec;
             LOG_INFO("[startup]");
 #ifndef JUST_DISABLE_DAC
             dac_.set_vod_version(version());
@@ -135,14 +135,14 @@ namespace just
             portMgr_.get_port(just::common::vod,port_);
             LOG_INFO("[startup] ok port:"<<port_);
 #endif
-            return ec;
+            return !ec;
         }
 
-        void PeerModule::shutdown()
+        bool PeerModule::shutdown(
+            error_code & ec)
         {
 #ifndef JUST_CONTAIN_PEER_WORKER
             if (process_) {
-                error_code ec;
                 process_->signal(Signal::sig_int, ec);
                 process_->timed_join(1000, ec);
                 if (!ec) {
@@ -161,6 +161,7 @@ namespace just
                 is_locked_ = false;
             }    
 #endif            
+            return !ec;
         }
 
         void PeerModule::check()
