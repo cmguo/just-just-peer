@@ -26,7 +26,7 @@ namespace just
 
         PeerSource::PeerSource(
             boost::asio::io_service & io_svc)
-            : just::cdn::P2pSource(io_svc)
+            : just::cdn::PptvP2pSource(io_svc)
             , module_(util::daemon::use_module<just::peer::PeerModule>(io_svc))
             , status_(NULL)
             , peer_fail_(false)
@@ -75,8 +75,6 @@ namespace just
             url.param("url", cdn_url);
             url.param("BWType", format(pptv_media().jump().bw_type));
             url.param("autoclose", "false");
-
-            url.encode();
 
             status_->set_current_url(cdn_url);
             

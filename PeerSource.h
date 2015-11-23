@@ -5,7 +5,7 @@
 
 #include "just/peer/PeerModule.h"
 
-#include <just/cdn/pptv/P2pSource.h>
+#include <just/cdn/pptv/PptvP2pSource.h>
 
 namespace just
 {
@@ -18,7 +18,7 @@ namespace just
     {
 
         class PeerSource
-            : public just::cdn::P2pSource
+            : public just::cdn::PptvP2pSource
         {
         public:
             PeerSource(
