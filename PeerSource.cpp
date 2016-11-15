@@ -42,14 +42,16 @@ namespace just
         void PeerSource::on_stream_status(
             just::avbase::StreamStatus const & stat)
         {
-            status_->update_buffer_time((boost::uint32_t)stat.buf_time());
-            module_.update_status(status_);
+            if (status_) {
+				status_->update_buffer_time((boost::uint32_t)stat.buf_time());
+            	module_.update_status(status_);
+            }
         }
 
         void PeerSource::parse_param(
             std::string const & params)
         {
-            if (use_peer()) {
+            if (use_peer() && (&seg_source()) != NULL) {
                 const_cast<just::data::SegmentSource &>(seg_source()).set_time_out(0);
             }
             status_ = module_.alloc_status();
@@ -65,17 +67,20 @@ namespace just
             boost::uint64_t & end, 
             boost::system::error_code & ec)
         {
-            LOG_DEBUG("Use peer worker, BWType: " << pptv_media().jump().bw_type);
-
             std::string cdn_url = url.to_string();
             url = framework::string::Url();
             url.protocol("http");
             url.host("127.0.0.1");
             url.svc(format(module_.port()));
             url.param("url", cdn_url);
-            url.param("BWType", format(pptv_media().jump().bw_type));
+            if (pptv_media())
+            {
+                LOG_DEBUG("Use peer worker, BWType: " << pptv_media()->jump().bw_type);
+                url.param("BWType", format(pptv_media()->jump().bw_type));
+            }
             url.param("autoclose", "false");
 
+            if (status_)
             status_->set_current_url(cdn_url);
             
             ec.clear();
@@ -84,9 +89,17 @@ namespace just
 
         bool PeerSource::use_peer()
         {
-            if (!peer_fail_ && seg_source().num_try() > 3)
+            // return false;
+            if (!peer_fail_ && (&seg_source() != NULL) && seg_source().num_try() > 3)
+            {
+                LOG_DEBUG("[use_peer] set peer_fail_ true");
                 peer_fail_ = true;
-            return module_.port() > 0 && !peer_fail_ && pptv_media().jump().bw_type != 100;
+            }
+
+            LOG_DEBUG("[use_peer] module_.port() " << module_.port());
+            LOG_DEBUG("[use_peer] peer_fail_ " << peer_fail_);
+
+            return module_.port() > 0 && !peer_fail_ && (pptv_media() != NULL && pptv_media()->jump().bw_type != 100);
         }
 
     } // namespace peer

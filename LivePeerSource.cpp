@@ -47,7 +47,7 @@ namespace just
             boost::uint64_t & end, 
             boost::system::error_code & ec)
         {
-            just::cdn::PptvLive const & live = (just::cdn::PptvLive const &)pptv_media();
+            just::cdn::PptvLive const & live = (just::cdn::PptvLive const &)(*pptv_media());
 
             if (!use_peer()) {
                 beg += 1400;
@@ -70,17 +70,26 @@ namespace just
 
             if (!ec) {
                 url.path("/playlive.flv");
-                url.param("channelid", live.video().rid);
-                url.param("rid", live.video().rid);
-                url.param("datarate", format(live.video().bitrate / 1000)); // kbps
+                url.param("channelid", vec[2]);
+                url.param("rid", vec[2]);
+                if(pptv_media()!=NULL)
+                {
+                    url.param("datarate", format(live.video().bitrate / 1000)); // kbps
+                    url.param("interval", format(live.segment().interval));
+                }else
+                {
+                    url.param("interval", format(5));
+                }
                 url.param("replay", "1");
                 url.param("start", vec1[0]);
-                url.param("interval", format(live.segment().interval));
                 url.param("source", "0");
                 url.param("uniqueid", format(++seq_));
             }
 
-            status_->set_current_url(url.to_string());
+            if (status_ != NULL)
+            {
+                status_->set_current_url(url.to_string());
+            }
 
             return !ec;
         }

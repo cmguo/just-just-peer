@@ -53,7 +53,7 @@ namespace just
             boost::uint64_t & end, 
             boost::system::error_code & ec)
         {
-            just::cdn::PptvVod const & vod = (just::cdn::PptvVod const &)pptv_media();
+            just::cdn::PptvVod const & vod = (just::cdn::PptvVod const &)(*pptv_media());
             
             char const * str_no = url.path().c_str() + 1;
             size_t no = 0;
