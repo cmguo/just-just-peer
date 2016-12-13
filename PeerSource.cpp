@@ -51,9 +51,10 @@ namespace just
         void PeerSource::parse_param(
             std::string const & params)
         {
+            /*
             if (use_peer() && (&seg_source()) != NULL) {
                 const_cast<just::data::SegmentSource &>(seg_source()).set_time_out(0);
-            }
+            }*/
             status_ = module_.alloc_status();
             size_t adv_time = 0;
             map_find(params, "advtime", adv_time, "&");
@@ -62,9 +63,9 @@ namespace just
         }
 
         bool PeerSource::prepare(
-            framework::string::Url & url, 
-            boost::uint64_t & beg, 
-            boost::uint64_t & end, 
+            framework::string::Url & url,
+            boost::uint64_t & beg,
+            boost::uint64_t & end,
             boost::system::error_code & ec)
         {
             std::string cdn_url = url.to_string();
@@ -82,7 +83,7 @@ namespace just
 
             if (status_)
             status_->set_current_url(cdn_url);
-            
+
             ec.clear();
             return true;
         }

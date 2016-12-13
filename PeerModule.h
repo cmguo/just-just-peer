@@ -13,12 +13,24 @@
 #ifndef JUST_CONTAIN_PEER_WORKER
 #include <framework/process/NamedMutex.h>
 
+
+
 namespace framework
 {
     namespace process { class Process; }
     namespace timer { class Timer; }
 }
 #endif
+
+#include <util/protocol/http/HttpClient.h>
+
+namespace util
+{
+    namespace protocol
+    {
+        class HttpClient;
+    }
+}
 
 namespace just
 {
@@ -34,6 +46,9 @@ namespace just
                 util::daemon::Daemon & daemon);
 
             ~PeerModule();
+        public:
+            static void static_init(
+                framework::configure::Config & conf);
 
         public:
             virtual bool startup(
@@ -94,6 +109,13 @@ namespace just
 
             bool is_locked_;
 #endif
+        private:
+            bool isn_self_started_;
+            util::protocol::HttpClient status_http_;
+            void handle_fetch(
+                boost::system::error_code const & ec);
+            void update_status2(
+                framework::string::Url &url);
         };
 
     } // namespace peer
