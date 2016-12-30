@@ -48,13 +48,13 @@ namespace just
         }
 
         bool VodPeerSource::prepare(
-            framework::string::Url & url, 
-            boost::uint64_t & beg, 
-            boost::uint64_t & end, 
+            framework::string::Url & url,
+            boost::uint64_t & beg,
+            boost::uint64_t & end,
             boost::system::error_code & ec)
         {
             just::cdn::PptvVod const & vod = (just::cdn::PptvVod const &)(*pptv_media());
-            
+
             char const * str_no = url.path().c_str() + 1;
             size_t no = 0;
             for (; *str_no >= '0' && *str_no <= '9'; ++str_no) {
@@ -70,6 +70,9 @@ namespace just
             just::data::SegmentInfo info;
             vod.segment_info(no, info, ec);
 
+            std::string temp_rid = url.param("rid");
+            url.param_del("rid");
+
             PeerSource::prepare(url, beg, end, ec);
 
             if (!ec) {
@@ -78,6 +81,7 @@ namespace just
                 url.param("headlength", format(info.head_size));
                 url.param("drag", status_->buffer_time() < 15000 ? "1" : "0");
                 url.param("headonly", end <= info.head_size ? "1" : "0");
+                url.param("rid", temp_rid);
             }
 
             return !ec;
