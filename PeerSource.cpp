@@ -90,15 +90,14 @@ namespace just
 
         bool PeerSource::use_peer()
         {
-            // return false;
-            if (!peer_fail_ && (&seg_source() != NULL) && seg_source().num_try() > 3)
-            {
-                LOG_DEBUG("[use_peer] set peer_fail_ true");
-                peer_fail_ = true;
-            }
+           // if (!peer_fail_ && (&seg_source() != NULL) && seg_source().num_try() > 3)
+           // {
+           //     LOG_WARN("[use_peer] set peer_fail_ true");
+           //     peer_fail_ = true;
+           // }
 
-            LOG_DEBUG("[use_peer] module_.port() " << module_.port());
-            LOG_DEBUG("[use_peer] peer_fail_ " << peer_fail_);
+            LOG_INFO("[use_peer] module_.port() " << module_.port());
+            LOG_INFO("[use_peer] peer_fail_ " << peer_fail_);
 
             return module_.port() > 0 && !peer_fail_ && (pptv_media() != NULL && pptv_media()->jump().bw_type != 100);
         }
