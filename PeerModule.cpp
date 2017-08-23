@@ -48,16 +48,12 @@ namespace just
             , dac_(util::daemon::use_module<just::dac::DacModule>(daemon))
 #endif
             , portMgr_(util::daemon::use_module<just::common::PortManager>(daemon))
-            , port_(0)
+            , port_(9000)
 #ifndef JUST_CONTAIN_PEER_WORKER
             , mutex_(9000)
             , is_locked_(false)
 #endif
-            ,status_http_(io_svc())
-            ,isn_self_started_(false)
         {
-            config().register_module("just.peer.PeerModule")
-                << CONFIG_PARAM_NAME_RDWR("port", port_);
 #ifdef JUST_CONTAIN_PEER_WORKER
             just::peer_worker::register_module(daemon);
 #else
@@ -111,12 +107,6 @@ namespace just
             dac_.set_vod_name(name());
 #endif
 #ifndef JUST_CONTAIN_PEER_WORKER
-
-            if(port_!=0){
-                isn_self_started_ = true;
-                portMgr_.set_port(just::common::vod,port_);
-                return !ec;
-            }
             timer_->start();
 
             if (is_lock()) {
@@ -152,9 +142,6 @@ namespace just
         bool PeerModule::shutdown(
             error_code & ec)
         {
-            if(isn_self_started_){
-                return !ec;
-            }
 #ifndef JUST_CONTAIN_PEER_WORKER
             if (process_) {
                 process_->signal(Signal::sig_int, ec);
@@ -237,6 +224,7 @@ namespace just
 
         just::peer_worker::ClientStatus * PeerModule::alloc_status()
         {
+            LOG_DEBUG("alloc_status");
             just::peer_worker::ClientStatus * stat = new just::peer_worker::ClientStatus;
             stats_->insert(stat);
             return stat;
@@ -253,28 +241,6 @@ namespace just
 
         void PeerModule::update_status(
             just::peer_worker::ClientStatus * status)
-        {
-#ifndef JUST_CONTAIN_PEER_WORKER
-            if(isn_self_started_ ){
-                //build_request
-                framework::string::Url url("http://127.0.0.1/setparam");
-                url.host("127.0.0.1:" + framework::string::format(port_));
-                url.param_add("url", status->current_url());
-                url.param_add("resttime", framework::string::format(status->buffer_time()));
-                //url.param_add("uniqueid", "");
-                LOG_INFO("[status url]" + url.to_string());
-                io_svc().post(boost::bind(&PeerModule::update_status2, this, url));
-            }
-#endif
-        }
-
-        void PeerModule::update_status2(
-            framework::string::Url &url)
-        {
-            this->status_http_.async_fetch(url, boost::bind(&PeerModule::handle_fetch, this, _1));
-        }
-
-        void PeerModule::handle_fetch(boost::system::error_code const & ec)
         {
 
         }
