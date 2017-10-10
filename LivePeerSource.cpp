@@ -80,7 +80,7 @@ namespace just
                 {
                     url.param("interval", format(5));
                 }
-                url.param("replay", "1");
+                url.param("replay", "0");
                 url.param("start", vec1[0]);
                 url.param("source", "0");
                 url.param("uniqueid", format(++seq_));
