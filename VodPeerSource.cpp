@@ -62,7 +62,7 @@ namespace just
             }
 
             // 格式不对的都直接通过CDN服务器下载
-            if (*str_no != '/' || !use_peer()) {
+            if (*str_no != '_' || !use_peer()) {
                 ec.clear();
                 return true;
             }
